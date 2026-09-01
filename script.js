@@ -41,7 +41,7 @@
     return `assets/pages/page-${String(page).padStart(2, '0')}.jpg`;
   }
 
-  function renderBlock(b) {
+  function renderBlock(b, sectionNumber) {
     switch (b.type) {
       case 'p':
         return `<p>${formatInline(b.text)}</p>`;
@@ -70,10 +70,51 @@
           <figcaption class="fig-caption"><span class="fig-num">Table ${b.num}</span>${formatInline(b.caption)}</figcaption>
         </figure>`;
       case 'reflist':
-        return `<ol class="reflist">${b.items.map(it => `<li><span class="ref-num">[${it.num}]</span><span>${formatInline(it.text)}</span></li>`).join('')}</ol>`;
+        return `<ol class="reflist">${b.items.map(it => `<li id="ref-${sectionNumber}-${it.num}"><span class="ref-num">[${it.num}]</span><span>${formatInline(it.text)}</span></li>`).join('')}</ol>`;
+      case 'ontology-matrix':
+        return renderOntologyMatrix(b);
       default:
         return '';
     }
+  }
+
+  function renderOntologyMatrix(b) {
+    const cols = b.columns;
+    const rows = b.items;
+    const wid = 'mtx-' + Math.random().toString(36).slice(2, 8);
+    const header = cols.map(c => `<th class="mtx-col" data-col="${c.key}" title="${escapeHtml(c.full)}"><button class="mtx-col-btn" data-col="${c.key}">${c.key}</button></th>`).join('');
+    const body = rows.map(r => {
+      const cells = cols.map(c => {
+        const has = r.domains.includes(c.key);
+        return `<td class="mtx-cell ${has ? 'yes' : ''}" data-col="${c.key}">${has ? '<span class="mtx-dot" title="' + escapeHtml(c.full) + '"></span>' : ''}</td>`;
+      }).join('');
+      const typeLabel = r.classif.includes('SM') ? 'Semantic Model' : 'Ontology';
+      const refLinks = (r.ref || '').replace(/[\[\]]/g, '').split(',').filter(Boolean)
+        .map(n => `<a href="#ref-BIB2-${n.trim()}" class="mtx-ref">[${n.trim()}]</a>`).join(' ');
+      return `<tr data-name="${escapeHtml(r.name.toLowerCase())}">
+        <th class="mtx-rowhead" scope="row">${escapeHtml(r.name)}</th>
+        ${cells}
+        <td class="mtx-type"><span class="mtx-pill ${r.classif.includes('SM') ? 'sm' : 'o'}">${typeLabel === 'Semantic Model' ? 'SM' : 'O'}</span></td>
+        <td class="mtx-refcell">${refLinks}</td>
+      </tr>`;
+    }).join('');
+
+    return `<div class="mtx-wrap" id="${wid}">
+      <div class="mtx-toolbar">
+        <div class="mtx-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="mtx-search-input" placeholder="Filter by ontology name…">
+        </div>
+        <div class="mtx-hint">Click a domain column to filter · <span class="mtx-match-count"></span></div>
+      </div>
+      <div class="mtx-scroll">
+        <table class="mtx-table">
+          <thead><tr><th class="mtx-rowhead-h">Ontology / Model</th>${header}<th>Type</th><th>Ref.</th></tr></thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+      <p class="mtx-caption">Domain-ontology comparison, reconstructed from the source table on pp. ${b.sourcePages.join('–')}. <button class="mtx-viewsource" data-page="${b.sourcePages[0]}">View original page image</button></p>
+    </div>`;
   }
 
   function headingTag(level) {
@@ -83,7 +124,7 @@
   function renderSection(s) {
     const tag = headingTag(s.level);
     const heading = `<${tag} id="${s.id}" class="section-heading"><span class="num">${s.number === 'A' || s.number === 'BIB' || s.number === 'BIB2' ? '' : s.number}</span>${escapeHtml(s.title)}<a class="anchor-link" href="#${s.id}" aria-label="Link to this section">#</a><span class="page-tag">p. ${s.page}</span></${tag}>`;
-    const body = s.blocks.map(renderBlock).join('\n');
+    const body = s.blocks.map(b => renderBlock(b, s.number)).join('\n');
     return `<section class="section section-l${s.level}" id="wrap-${s.id}">${heading}${body}</section>`;
   }
 
@@ -122,6 +163,61 @@
     const html = sections.map(renderSection).join('\n');
     els.content.innerHTML = buildDocHeader() + html + buildPageNav();
     attachLightboxHandlers();
+    attachMatrixHandlers();
+  }
+
+  function attachMatrixHandlers() {
+    document.querySelectorAll('.mtx-wrap').forEach(wrap => {
+      const table = wrap.querySelector('.mtx-table');
+      const searchInput = wrap.querySelector('.mtx-search-input');
+      const matchCount = wrap.querySelector('.mtx-match-count');
+      const activeCols = new Set();
+      const rows = Array.from(table.querySelectorAll('tbody tr'));
+
+      function applyFilters() {
+        const q = searchInput.value.trim().toLowerCase();
+        let visible = 0;
+        rows.forEach(row => {
+          const nameMatch = !q || row.dataset.name.includes(q);
+          let colMatch = true;
+          if (activeCols.size > 0) {
+            colMatch = Array.from(activeCols).every(col => row.querySelector(`.mtx-cell[data-col="${col}"]`).classList.contains('yes'));
+          }
+          const show = nameMatch && colMatch;
+          row.style.display = show ? '' : 'none';
+          if (show) visible++;
+        });
+        matchCount.textContent = `${visible} of ${rows.length} shown`;
+      }
+
+      searchInput.addEventListener('input', applyFilters);
+
+      wrap.querySelectorAll('.mtx-col-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const col = btn.dataset.col;
+          if (activeCols.has(col)) {
+            activeCols.delete(col);
+            btn.classList.remove('active');
+          } else {
+            activeCols.add(col);
+            btn.classList.add('active');
+          }
+          applyFilters();
+        });
+      });
+
+      const viewSourceBtn = wrap.querySelector('.mtx-viewsource');
+      if (viewSourceBtn) {
+        viewSourceBtn.addEventListener('click', () => {
+          const page = viewSourceBtn.dataset.page;
+          els.lightboxImg.src = figImg(page);
+          els.lightboxImg.alt = 'Source page ' + page;
+          els.lightbox.classList.add('show');
+        });
+      }
+
+      applyFilters();
+    });
   }
 
   function buildPageNav() {

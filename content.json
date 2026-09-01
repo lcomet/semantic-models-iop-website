@@ -1486,20 +1486,540 @@
     "text": "The following content corresponds to domain-ontologies in the manufacturing and pro- duction domain, with their respective references and classification. SM indicates that the resource is a Semantic Model, and O means that it is an ontology."
    },
    {
-    "type": "table",
-    "num": "10",
-    "caption": "Ontologies in the Production and Processes Domains — full comparison matrix (see page image for detail)",
-    "page": 40
-   },
-   {
-    "type": "table",
-    "num": "10",
-    "caption": "Ontologies in the Production and Processes Domains — full comparison matrix (see page image for detail)",
-    "page": 41
+    "type": "ontology-matrix",
+    "columns": [
+     {
+      "key": "MFG",
+      "full": "Manufacturing"
+     },
+     {
+      "key": "PROD",
+      "full": "Products"
+     },
+     {
+      "key": "PROC",
+      "full": "Processes"
+     },
+     {
+      "key": "RES",
+      "full": "Resources"
+     },
+     {
+      "key": "P.COMP",
+      "full": "Plant Components"
+     },
+     {
+      "key": "ACTV",
+      "full": "Activities"
+     },
+     {
+      "key": "SHED",
+      "full": "Scheduling"
+     },
+     {
+      "key": "MAINT",
+      "full": "Maintenance"
+     },
+     {
+      "key": "SENS",
+      "full": "Sensors"
+     },
+     {
+      "key": "ROBT",
+      "full": "Robotics"
+     },
+     {
+      "key": "ENG",
+      "full": "Engineering"
+     },
+     {
+      "key": "BATCH",
+      "full": "Batch Processing"
+     },
+     {
+      "key": "MSMT",
+      "full": "Measurements"
+     },
+     {
+      "key": "STD",
+      "full": "Standards"
+     },
+     {
+      "key": "SIM",
+      "full": "Simulation"
+     }
+    ],
+    "items": [
+     {
+      "name": "SOIL",
+      "classif": "SM",
+      "ref": "[1]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "RES",
+       "MSMT"
+      ]
+     },
+     {
+      "name": "SemAnz4.0",
+      "classif": "SM",
+      "ref": "[2]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC"
+      ]
+     },
+     {
+      "name": "iFAB",
+      "classif": "SM",
+      "ref": "[2]",
+      "domains": [
+       "MFG"
+      ]
+     },
+     {
+      "name": "ADACOR",
+      "classif": "SM",
+      "ref": "[2]",
+      "domains": [
+       "MFG",
+       "PROC",
+       "P.COMP",
+       "SHED"
+      ]
+     },
+     {
+      "name": "MASON",
+      "classif": "O",
+      "ref": "[3,4]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "RES"
+      ]
+     },
+     {
+      "name": "MaSDeM",
+      "classif": "O",
+      "ref": "[2]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "RES",
+       "ENG"
+      ]
+     },
+     {
+      "name": "SIMPM",
+      "classif": "O",
+      "ref": "[5]",
+      "domains": [
+       "MFG",
+       "PROC"
+      ]
+     },
+     {
+      "name": "PSL",
+      "classif": "O",
+      "ref": "[3]",
+      "domains": [
+       "MFG",
+       "PROC",
+       "ACTV",
+       "SHED",
+       "SIM"
+      ]
+     },
+     {
+      "name": "OntoCAPE",
+      "classif": "O,SM",
+      "ref": "[2]",
+      "domains": [
+       "PROC",
+       "ENG"
+      ]
+     },
+     {
+      "name": "BaPrOn",
+      "classif": "O",
+      "ref": "[6]",
+      "domains": [
+       "PROC",
+       "SHED",
+       "BATCH"
+      ]
+     },
+     {
+      "name": "FABMAS",
+      "classif": "O",
+      "ref": "[7]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "RES",
+       "ACTV",
+       "SHED"
+      ]
+     },
+     {
+      "name": "PrOnto",
+      "classif": "O",
+      "ref": "[2,8]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "P.COMP"
+      ]
+     },
+     {
+      "name": "ARUM",
+      "classif": "O",
+      "ref": "[9]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "RES",
+       "SHED"
+      ]
+     },
+     {
+      "name": "RGOM",
+      "classif": "SM",
+      "ref": "[8]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "RES",
+       "SHED",
+       "MAINT",
+       "STD"
+      ]
+     },
+     {
+      "name": "ONTO-PDM",
+      "classif": "O",
+      "ref": "[10]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "RES",
+       "SHED",
+       "STD"
+      ]
+     },
+     {
+      "name": "MPMO",
+      "classif": "O",
+      "ref": "[11]",
+      "domains": [
+       "MFG",
+       "PROC",
+       "RES",
+       "ROBT"
+      ]
+     },
+     {
+      "name": "MCCO",
+      "classif": "O",
+      "ref": "[2]",
+      "domains": [
+       "MFG",
+       "PROD"
+      ]
+     },
+     {
+      "name": "SCRO",
+      "classif": "O",
+      "ref": "[12]",
+      "domains": [
+       "MFG",
+       "PROC",
+       "RES",
+       "P.COMP",
+       "ACTV"
+      ]
+     },
+     {
+      "name": "MSDL",
+      "classif": "O",
+      "ref": "[2]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "RES"
+      ]
+     },
+     {
+      "name": "AMU",
+      "classif": "O",
+      "ref": "[13]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "RES",
+       "P.COMP"
+      ]
+     },
+     {
+      "name": "MTM",
+      "classif": "O",
+      "ref": "[14]",
+      "domains": [
+       "MFG",
+       "RES"
+      ]
+     },
+     {
+      "name": "MPO",
+      "classif": "O",
+      "ref": "[15]",
+      "domains": [
+       "MFG",
+       "PROC",
+       "RES",
+       "ENG"
+      ]
+     },
+     {
+      "name": "IMAMO",
+      "classif": "O",
+      "ref": "[13]",
+      "domains": [
+       "MFG",
+       "RES",
+       "P.COMP",
+       "MAINT",
+       "SENS"
+      ]
+     },
+     {
+      "name": "IEO",
+      "classif": "O",
+      "ref": "[2]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "RES",
+       "P.COMP",
+       "BATCH"
+      ]
+     },
+     {
+      "name": "COMPOSITION",
+      "classif": "O",
+      "ref": "[16]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "RES"
+      ]
+     },
+     {
+      "name": "MaRCO",
+      "classif": "O",
+      "ref": "[17]",
+      "domains": [
+       "MFG",
+       "RES"
+      ]
+     },
+     {
+      "name": "ExtruOnt",
+      "classif": "O",
+      "ref": "[17]",
+      "domains": [
+       "MFG",
+       "PROC",
+       "RES",
+       "SENS"
+      ]
+     },
+     {
+      "name": "OntoProg",
+      "classif": "O",
+      "ref": "[18]",
+      "domains": [
+       "MFG",
+       "RES",
+       "MAINT"
+      ]
+     },
+     {
+      "name": "Onto-ICMS",
+      "classif": "O",
+      "ref": "[19]",
+      "domains": [
+       "MFG",
+       "PROC",
+       "RES",
+       "P.COMP",
+       "ACTV",
+       "MAINT"
+      ]
+     },
+     {
+      "name": "AMLO",
+      "classif": "O",
+      "ref": "[20]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "RES",
+       "P.COMP",
+       "SENS",
+       "ENG",
+       "STD"
+      ]
+     },
+     {
+      "name": "WSSN",
+      "classif": "O",
+      "ref": "[21]",
+      "domains": [
+       "MAINT"
+      ]
+     },
+     {
+      "name": "M3",
+      "classif": "O",
+      "ref": "[22]",
+      "domains": [
+       "SENS",
+       "ROBT",
+       "MSMT",
+       "STD"
+      ]
+     },
+     {
+      "name": "CSIRO-SO",
+      "classif": "O",
+      "ref": "[23]",
+      "domains": [
+       "PROC",
+       "SENS",
+       "MSMT"
+      ]
+     },
+     {
+      "name": "OPW",
+      "classif": "O",
+      "ref": "[24]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "RES",
+       "ACTV"
+      ]
+     },
+     {
+      "name": "CDM-Core",
+      "classif": "O",
+      "ref": "[25,13]",
+      "domains": [
+       "MFG",
+       "PROC",
+       "SHED",
+       "ROBT",
+       "MSMT",
+       "STD"
+      ]
+     },
+     {
+      "name": "ROMAIN",
+      "classif": "O",
+      "ref": "[26,13]",
+      "domains": [
+       "PROC",
+       "RES",
+       "MAINT"
+      ]
+     },
+     {
+      "name": "STO",
+      "classif": "O",
+      "ref": "[27]",
+      "domains": [
+       "MFG",
+       "STD"
+      ]
+     },
+     {
+      "name": "SSN",
+      "classif": "O",
+      "ref": "[28]",
+      "domains": [
+       "RES",
+       "SENS"
+      ]
+     },
+     {
+      "name": "newSSN",
+      "classif": "O",
+      "ref": "[28]",
+      "domains": [
+       "RES",
+       "SENS"
+      ]
+     },
+     {
+      "name": "AWARE",
+      "classif": "O",
+      "ref": "[28]",
+      "domains": [
+       "RES",
+       "SENS",
+       "ROBT"
+      ]
+     },
+     {
+      "name": "OntologySim",
+      "classif": "O",
+      "ref": "[29]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "RES",
+       "ACTV",
+       "SIM"
+      ]
+     },
+     {
+      "name": "CMSD",
+      "classif": "O",
+      "ref": "[30]",
+      "domains": [
+       "MFG",
+       "PROD",
+       "PROC",
+       "RES",
+       "SIM"
+      ]
+     }
+    ],
+    "sourcePages": [
+     40,
+     41
+    ]
    },
    {
     "type": "p",
-    "text": "Legend: MFG: Manufacturing, PROD: Products, PROC: Processes, RES: Resources, P.COMP: Plant Components, ACTV: Activities, SHED: Scheduling, MAINT: Maintenance, SENS: Sensors, ROBT: robotics, ENG: Engineering, BATCH: Batch Processing, MSMT: Measurements, STD: Standards, SIM: Simulation"
+    "text": "Legend: MFG: Manufacturing, PROD: Products, PROC: Processes, RES: Resources, P.COMP: Plant Components, ACTV: Activities, SHED: Scheduling, MAINT: Maintenance, SENS: Sensors, ROBT: robotics, ENG: Engineering, BATCH: Batch Processing, MSMT: Measurements, STD: Standards, SIM: Simulation. Type: SM = Semantic Model, O = Ontology."
    }
   ]
  },

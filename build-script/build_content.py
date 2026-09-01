@@ -259,24 +259,27 @@ def split_refs(text):
 
 for s in sections:
     if s['number'] == 'A.2':
-        keep = []
-        seen_pages = []
+        keep_intro = None
         for b in s['blocks']:
-            if b['type'] == 'p' and (b['text'].startswith('The following content') or b['text'].startswith('Legend:')):
-                keep.append(b)
-            elif b['type'] == 'reflist':
-                keep.append(b)
-        # gather the distinct pages this section spans for the table images
-        start_pg = s['page']
-        # find next section's page (BIB2) to bound the range
-        next_pg = None
-        for other in sections:
-            if other['number'] == 'BIB2':
-                next_pg = other['page']
-        end_pg = (next_pg - 1) if next_pg else start_pg + 2
-        table_imgs = [{'type': 'table', 'num': '10', 'caption': 'Ontologies in the Production and Processes Domains — full comparison matrix (see page image for detail)', 'page': p}
-                      for p in range(start_pg, end_pg + 1)]
-        s['blocks'] = keep[:1] + table_imgs + keep[1:]
+            if b['type'] == 'p' and b['text'].startswith('The following content'):
+                keep_intro = b
+        import json as _json
+        matrix_rows = _json.load(open('/home/claude/matrix_final.json', encoding='utf-8'))
+        MATRIX_COLS = ['MFG', 'PROD', 'PROC', 'RES', 'P.COMP', 'ACTV', 'SHED', 'MAINT', 'SENS', 'ROBT', 'ENG', 'BATCH', 'MSMT', 'STD', 'SIM']
+        MATRIX_FULLNAMES = {
+            'MFG': 'Manufacturing', 'PROD': 'Products', 'PROC': 'Processes', 'RES': 'Resources',
+            'P.COMP': 'Plant Components', 'ACTV': 'Activities', 'SHED': 'Scheduling', 'MAINT': 'Maintenance',
+            'SENS': 'Sensors', 'ROBT': 'Robotics', 'ENG': 'Engineering', 'BATCH': 'Batch Processing',
+            'MSMT': 'Measurements', 'STD': 'Standards', 'SIM': 'Simulation'
+        }
+        matrix_block = {
+            'type': 'ontology-matrix',
+            'columns': [{'key': k, 'full': MATRIX_FULLNAMES[k]} for k in MATRIX_COLS],
+            'items': matrix_rows,
+            'sourcePages': [40, 41]
+        }
+        legend_p = {'type': 'p', 'text': 'Legend: MFG: Manufacturing, PROD: Products, PROC: Processes, RES: Resources, P.COMP: Plant Components, ACTV: Activities, SHED: Scheduling, MAINT: Maintenance, SENS: Sensors, ROBT: robotics, ENG: Engineering, BATCH: Batch Processing, MSMT: Measurements, STD: Standards, SIM: Simulation. Type: SM = Semantic Model, O = Ontology.'}
+        s['blocks'] = [b for b in [keep_intro, matrix_block, legend_p] if b]
     if s['number'] == 'A.1':
         figs = [b for b in s['blocks'] if b['type'] == 'figure']
         intro = {'type': 'p', 'text': 'This section reproduces the LOT (Linked Open Terms) Methodology diagrams referenced throughout this guideline, by the Ontology Engineering Group (OEG), licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.'}

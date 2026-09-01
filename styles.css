@@ -512,7 +512,146 @@ h4.section-heading .num{ font-size: 13px; }
   margin-right: 6px;
 }
 
-/* reference list */
+/* ---------------- ontology comparison matrix ---------------- */
+.mtx-wrap{
+  margin: 8px 0 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  overflow: hidden;
+}
+.mtx-toolbar{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  flex-wrap: wrap;
+}
+.mtx-search{
+  position: relative;
+  width: 240px;
+  max-width: 100%;
+}
+.mtx-search svg{
+  position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+  width: 13px; height: 13px; color: var(--ink-faint);
+}
+.mtx-search-input{
+  width: 100%;
+  padding: 7px 10px 7px 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  font-family: var(--font-ui);
+}
+.mtx-hint{
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  font-family: var(--font-ui);
+}
+.mtx-match-count{ font-family: var(--font-mono); color: var(--accent); }
+
+.mtx-scroll{ overflow-x: auto; max-height: 560px; overflow-y: auto; }
+.mtx-table{
+  border-collapse: collapse;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.mtx-table thead th{
+  position: sticky;
+  top: 0;
+  background: var(--surface-2);
+  z-index: 2;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--border-strong);
+  font-weight: 600;
+  text-align: center;
+}
+.mtx-rowhead-h{
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  text-align: left !important;
+  padding-left: 14px !important;
+  min-width: 160px;
+}
+.mtx-col-btn{
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+.mtx-col-btn:hover{ background: var(--accent-soft); color: var(--accent-strong); }
+.mtx-col-btn.active{ background: var(--accent); color: var(--accent-contrast); }
+
+.mtx-table tbody tr:nth-child(even){ background: color-mix(in srgb, var(--surface-2) 45%, transparent); }
+.mtx-table td, .mtx-table th{ border-bottom: 1px solid var(--border); }
+.mtx-rowhead{
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 1;
+  text-align: left;
+  padding: 7px 14px;
+  font-weight: 600;
+  font-size: 12.5px;
+  border-right: 1px solid var(--border);
+}
+.mtx-table tbody tr:nth-child(even) .mtx-rowhead{ background: var(--surface-2); }
+.mtx-cell{ text-align: center; padding: 7px 4px; width: 34px; }
+.mtx-dot{
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.mtx-type, .mtx-refcell{ padding: 7px 10px; text-align: center; }
+.mtx-pill{
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+.mtx-pill.o{ background: var(--accent-soft); color: var(--accent-strong); }
+.mtx-pill.sm{ background: var(--gold-soft); color: var(--gold); }
+.mtx-ref{
+  font-family: var(--font-mono);
+  font-size: 11px;
+  margin-right: 3px;
+}
+.mtx-caption{
+  font-family: var(--font-ui) !important;
+  font-size: 12px !important;
+  color: var(--ink-faint);
+  padding: 10px 14px !important;
+  margin: 0 !important;
+  max-width: none !important;
+  border-top: 1px solid var(--border);
+}
+.mtx-viewsource{
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  font-family: var(--font-ui);
+}
+
+
 .reflist{
   list-style: none;
   padding: 0;
