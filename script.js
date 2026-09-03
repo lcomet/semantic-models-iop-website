@@ -41,38 +41,73 @@
     return `assets/pages/page-${String(page).padStart(2, '0')}.jpg`;
   }
 
-  function renderBlock(b, sectionNumber) {
+  function renderListItem(it) {
+    const nested = it.blocks && it.blocks.length ? it.blocks.map(renderBlock).join('\n') : '';
+    return `<li>${it.html}${nested}</li>`;
+  }
+
+  function renderBlock(b) {
     switch (b.type) {
       case 'p':
-        return `<p>${formatInline(b.text)}</p>`;
+        return `<p>${b.html}</p>`;
       case 'concept':
-        return `<div class="concept">${formatInline(b.text)}</div>`;
+        return `<div class="concept">${b.html}${b.image ? `<img class="concept-img" src="${b.image}" alt="">` : ''}</div>`;
       case 'callout': {
-        const labels = { remark: 'Remark', note: 'Note', hint: 'Hint', example: b.label ? b.label : 'Example' };
-        return `<div class="callout ${b.kind}"><span class="callout-label">${labels[b.kind] || b.kind}</span>${formatInline(b.text)}</div>`;
+        const labels = { remark: 'Remark', note: 'Note', hint: 'Hint', facts: 'Facts' };
+        const label = labels[b.kind] || (b.kind ? b.kind[0].toUpperCase() + b.kind.slice(1) : 'Note');
+        return `<div class="callout ${b.kind}"><span class="callout-label">${label}</span>${b.html}</div>`;
+      }
+      case 'callout-blocks': {
+        const labels = { facts: 'Facts' };
+        const label = labels[b.kind] || 'Note';
+        const inner = b.blocks.map(renderBlock).join('\n');
+        return `<div class="callout ${b.kind}"><span class="callout-label">${label}</span>${inner}</div>`;
       }
       case 'ul':
-        return `<ul>${b.items.map(i => `<li>${formatInline(i)}</li>`).join('')}</ul>`;
+        return `<ul>${b.items.map(renderListItem).join('')}</ul>`;
       case 'ol':
-        return `<ol${b.start && b.start !== 1 ? ` start="${b.start}"` : ''}>${b.items.map(i => `<li>${formatInline(i)}</li>`).join('')}</ol>`;
-      case 'ol_alpha':
-        return `<ol class="alpha">${b.items.map(i => `<li>${formatInline(i)}</li>`).join('')}</ol>`;
+        return `<ol${b.start && b.start !== 1 ? ` start="${b.start}"` : ''}>${b.items.map(renderListItem).join('')}</ol>`;
       case 'figure':
         return `<figure class="fig-block">
-          <div class="fig-frame"><img src="${figImg(b.page)}" alt="Figure ${b.num}: ${escapeHtml(b.caption)}" loading="lazy" data-lightbox="${figImg(b.page)}"></div>
-          <p class="zoom-hint">Click to view full page (p. ${b.page})</p>
-          <figcaption class="fig-caption"><span class="fig-num">Figure ${b.num}</span>${formatInline(b.caption)}</figcaption>
+          <div class="fig-frame"><img src="${b.src}" alt="Figure ${b.num}" loading="lazy" data-lightbox="${b.src}"></div>
+          <figcaption class="fig-caption"><span class="fig-num" id="figure-${b.num}">Figure ${b.num}</span>${b.caption}</figcaption>
         </figure>`;
-      case 'table':
-        return `<figure class="fig-block">
-          <div class="fig-frame"><img src="${figImg(b.page)}" alt="Table ${b.num}: ${escapeHtml(b.caption)}" loading="lazy" data-lightbox="${figImg(b.page)}"></div>
-          <p class="zoom-hint">Click to view full page (p. ${b.page})</p>
-          <figcaption class="fig-caption"><span class="fig-num">Table ${b.num}</span>${formatInline(b.caption)}</figcaption>
+      case 'figure-group': {
+        const imgs = b.images.map(im => `
+          <div class="fig-frame"><img src="${im.src}" alt="" loading="lazy" data-lightbox="${im.src}"></div>
+          <p class="fig-subcaption">${im.caption}</p>`).join('');
+        return `<figure class="fig-block fig-group">
+          <div class="fig-group-imgs">${imgs}</div>
+          <figcaption class="fig-caption"><span class="fig-num" id="figure-${b.num}">Figure ${b.num}</span>${b.caption}</figcaption>
         </figure>`;
+      }
+      case 'inline-image':
+        return `<div class="inline-img-wrap"><img class="inline-img" src="${b.src}" alt="" loading="lazy" data-lightbox="${b.src}"></div>`;
+      case 'table': {
+        const hasHeader = b.header && b.header.length;
+        const singleCol = hasHeader && b.header.length === 1;
+        if (singleCol) {
+          const rows = b.rows.map(r => `<li>${r[0]}</li>`).join('');
+          return `<div class="reslist-wrap">
+            ${b.caption ? `<p class="table-caption"><span class="fig-num" id="table-${b.num}">Table ${b.num}</span>${b.caption}</p>` : ''}
+            <ul class="reslist">${rows}</ul>
+          </div>`;
+        }
+        const headHtml = hasHeader ? `<thead><tr>${b.header.map(c => `<th>${c}</th>`).join('')}</tr></thead>` : '';
+        const bodyHtml = `<tbody>${b.rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>`;
+        return `<div class="datatable-wrap">
+          ${b.caption ? `<p class="table-caption"><span class="fig-num" id="table-${b.num}">Table ${b.num}</span>${b.caption}</p>` : ''}
+          <div class="datatable-scroll"><table class="datatable">${headHtml}${bodyHtml}</table></div>
+        </div>`;
+      }
+      case 'abbreviations':
+        return `<dl class="abbrev-list">${b.items.map(it => `<div class="abbrev-row"><dt>${it.abbr}</dt><dd>${it.full}</dd></div>`).join('')}</dl>`;
       case 'reflist':
-        return `<ol class="reflist">${b.items.map(it => `<li id="ref-${sectionNumber}-${it.num}"><span class="ref-num">[${it.num}]</span><span>${formatInline(it.text)}</span></li>`).join('')}</ol>`;
+        return `<ol class="reflist">${b.items.map(it => `<li id="ref-${it.key}"><span class="ref-num">[${it.num}]</span><span>${it.text}${it.url ? ` <a href="${it.url}" target="_blank" rel="noopener" class="ref-link">↗</a>` : ''}</span></li>`).join('')}</ol>`;
       case 'ontology-matrix':
         return renderOntologyMatrix(b);
+      case 'raw':
+        return b.blocks.map(renderBlock).join('\n');
       default:
         return '';
     }
@@ -90,7 +125,7 @@
       }).join('');
       const typeLabel = r.classif.includes('SM') ? 'Semantic Model' : 'Ontology';
       const refLinks = (r.ref || '').replace(/[\[\]]/g, '').split(',').filter(Boolean)
-        .map(n => `<a href="#ref-BIB2-${n.trim()}" class="mtx-ref">[${n.trim()}]</a>`).join(' ');
+        .map(n => `<a href="#ref-domtab-${n.trim()}" class="mtx-ref">[${n.trim()}]</a>`).join(' ');
       return `<tr data-name="${escapeHtml(r.name.toLowerCase())}">
         <th class="mtx-rowhead" scope="row">${escapeHtml(r.name)}</th>
         ${cells}
@@ -113,7 +148,7 @@
           <tbody>${body}</tbody>
         </table>
       </div>
-      <p class="mtx-caption">Domain-ontology comparison, reconstructed from the source table on pp. ${b.sourcePages.join('–')}. <button class="mtx-viewsource" data-page="${b.sourcePages[0]}">View original page image</button></p>
+      <p class="mtx-caption">${b.sourceNote || 'Domain-ontology comparison table.'}</p>
     </div>`;
   }
 
@@ -123,8 +158,9 @@
 
   function renderSection(s) {
     const tag = headingTag(s.level);
-    const heading = `<${tag} id="${s.id}" class="section-heading"><span class="num">${s.number === 'A' || s.number === 'BIB' || s.number === 'BIB2' ? '' : s.number}</span>${escapeHtml(s.title)}<a class="anchor-link" href="#${s.id}" aria-label="Link to this section">#</a><span class="page-tag">p. ${s.page}</span></${tag}>`;
-    const body = s.blocks.map(b => renderBlock(b, s.number)).join('\n');
+    const numHtml = s.number ? `<span class="num">${escapeHtml(s.number)}</span>` : '';
+    const heading = `<${tag} id="${s.id}" class="section-heading">${numHtml}${s.title}<a class="anchor-link" href="#${s.id}" aria-label="Link to this section">#</a></${tag}>`;
+    const body = s.blocks.map(renderBlock).join('\n');
     return `<section class="section section-l${s.level}" id="wrap-${s.id}">${heading}${body}</section>`;
   }
 
@@ -210,8 +246,8 @@
       if (viewSourceBtn) {
         viewSourceBtn.addEventListener('click', () => {
           const page = viewSourceBtn.dataset.page;
-          els.lightboxImg.src = figImg(page);
-          els.lightboxImg.alt = 'Source page ' + page;
+          els.lightboxImg.src = page;
+          els.lightboxImg.alt = 'Source page';
           els.lightbox.classList.add('show');
         });
       }
@@ -231,16 +267,16 @@
     const prev = idx > 0 ? SECTIONS[idx - 1] : null;
     const next = idx >= 0 && idx < SECTIONS.length - 1 ? SECTIONS[idx + 1] : null;
     nav.innerHTML = `
-      ${prev ? `<a class="prev" href="#${prev.id}"><div class="dir">Previous</div><div class="ttl">${escapeHtml(prev.title)}</div></a>` : '<span></span>'}
-      ${next ? `<a class="next" href="#${next.id}"><div class="dir">Next</div><div class="ttl">${escapeHtml(next.title)}</div></a>` : '<span></span>'}
+      ${prev ? `<a class="prev" href="#${prev.id}"><div class="dir">Previous</div><div class="ttl">${prev.title}</div></a>` : '<span></span>'}
+      ${next ? `<a class="next" href="#${next.id}"><div class="dir">Next</div><div class="ttl">${next.title}</div></a>` : '<span></span>'}
     `;
   }
 
   // -------- TOC --------
   function buildTOC(sections) {
     els.toc.innerHTML = sections.map(s => {
-      const showNum = !['A', 'BIB', 'BIB2'].includes(s.number);
-      return `<a class="toc-link level-${s.level}" data-target="${s.id}" data-text="${escapeHtml((s.number + ' ' + s.title).toLowerCase())}" href="#${s.id}">${showNum ? `<span class="num">${s.number}</span>` : ''}${escapeHtml(s.title)}</a>`;
+      const plainTitle = s.title.replace(/<[^>]+>/g, '');
+      return `<a class="toc-link level-${s.level}" data-target="${s.id}" data-text="${escapeHtml(((s.number || '') + ' ' + plainTitle).toLowerCase())}" href="#${s.id}">${s.number ? `<span class="num">${escapeHtml(s.number)}</span>` : ''}${plainTitle}</a>`;
     }).join('');
   }
 
@@ -276,10 +312,31 @@
 
   // -------- search --------
   let searchIndex = [];
+  function stripTags(html) {
+    return (html || '').replace(/<[^>]+>/g, ' ');
+  }
+  function blockText(b) {
+    let out = '';
+    if (b.html) out += stripTags(b.html) + ' ';
+    if (b.caption) out += stripTags(b.caption) + ' ';
+    if (b.items) {
+      b.items.forEach(it => {
+        if (typeof it === 'string') out += stripTags(it) + ' ';
+        else if (it.html) { out += stripTags(it.html) + ' '; if (it.blocks) out += it.blocks.map(blockText).join(' '); }
+        else if (it.text) out += stripTags(it.text) + ' ';
+        else if (it.full) out += stripTags(it.abbr + ' ' + it.full) + ' ';
+        else if (it.name) out += it.name + ' ';
+      });
+    }
+    if (b.blocks) out += b.blocks.map(blockText).join(' ');
+    if (b.images) out += b.images.map(im => stripTags(im.caption || '')).join(' ');
+    return out;
+  }
   function buildSearchIndex() {
     searchIndex = SECTIONS.map(s => {
-      const text = s.blocks.map(b => b.text || (b.items ? (Array.isArray(b.items) ? b.items.map(i => i.text || i).join(' ') : '') : '') || b.caption || '').join(' ');
-      return { id: s.id, number: s.number, title: s.title, haystack: (s.number + ' ' + s.title + ' ' + text).toLowerCase() };
+      const text = s.blocks.map(blockText).join(' ');
+      const plainTitle = stripTags(s.title);
+      return { id: s.id, number: s.number, title: plainTitle, haystack: ((s.number || '') + ' ' + plainTitle + ' ' + text).toLowerCase() };
     });
   }
 

@@ -1,0 +1,152 @@
+[
+ {
+  "num": 1,
+  "text": "Amon G\u00f6ppert, Lea Grahn, Jonas Rachner, Dennis Grunert, Simon Hort, and Robert H Schmitt. 2021. Pipeline for ontology-based modeling and automated deployment of digital twins for planning and control of manufacturing systems. Journal of Intelligent Manufacturing, 1\u201320.",
+  "url": ""
+ },
+ {
+  "num": 2,
+  "text": "Felix Ocker, Birgit Vogel-Heuser, and Christiaan J. J. Paredis. 2019. Applying Semantic Web Technologies to Provide Feasibility Feedback in Early Design Phases. Journal of Computing and Information Science in Engineering, 19, 4, (July 2019). 041016. ISSN: 1530-9827. DOI: 10.1115/1.4043795. eprint: https://asmedigitalcollection.asme.org/computingengineering/ article-pdf/19/4/041016/6415224/jcise_19_4_041016.pdf. https://doi.org/10.1115/1.4043795.",
+  "url": "https://doi.org/10.1115/1.4043795"
+ },
+ {
+  "num": 3,
+  "text": "Sadeer Beden, Qiushi Cao, and Arnold Beckmann. 2021. Semantic Asset Administration Shells in Industry 4.0: A Survey. In 2021 4th IEEE International Conference on Industrial Cyber-Physical Systems (ICPS), 31\u201338. DOI: 10.1109 / ICPS49255.2021.9468266.",
+  "url": ""
+ },
+ {
+  "num": 4,
+  "text": "S. Lemaignan, A. Siadat, J.-Y. Dantan, and A. Semenenko. 2006. MASON: A Proposal For An Ontology Of Manufacturing Domain. In IEEE Workshop on Distributed Intelligent Systems: Collective Intelligence and Its Applications (DIS\u201906), 195\u2013200. DOI: 10.1109/DIS.2006.48.",
+  "url": ""
+ },
+ {
+  "num": 5,
+  "text": "Du\u0161an \u0160ormaz and Arkopaul Sarkar. 2019. Simpm \u2013 upper-level ontology for manufacturing process plan network generation. Robotics and Computer-Integrated Manufacturing, 55, 183\u2013198. Extended Papers Selected from FAIM2016. ISSN: 0736-5845. DOI: https://doi.org/10.1016/j.rcim.2018.04.002. https://www.sciencedirect.com/science/article/pii/ S0736584517302119.",
+  "url": "https://www.sciencedirect.com/science/article/pii/"
+ },
+ {
+  "num": 6,
+  "text": "E. Mu\u00f1oz, G.M. Kopanos, A. Espu\u00f1a, and L. Puigjaner. 2009. Towards an Ontological Infrastructure for Chemical Batch Process Management. In 19th European Symposium on Computer Aided Process Engineering. Computer Aided Chemical Engineering. Volume 26. Jacek Je\u017cowski and Jan Thullie, editors. Elsevier, 883\u2013888. DOI: https://doi.org/10.1016/S1570-7946(09) 70147-6. https://www.sciencedirect.com/science/article/pii/S1570794609701476.",
+  "url": "https://www.sciencedirect.com/science/article/pii/S1570794609701476"
+ },
+ {
+  "num": 7,
+  "text": "Lars M\u00f6nch and Marcel Stehli. 2003. An ontology for production control of semiconductor manufacturing processes. In German Conference on Multiagent System Technologies. Springer, 156\u2013167.",
+  "url": ""
+ },
+ {
+  "num": 8,
+  "text": "Muhammad Yahya, John G. Breslin, and Muhammad Intizar Ali. 2021. Semantic Web and Knowledge Graphs for Industry 4.0. Applied Sciences, 11, 11. ISSN: 2076-3417. DOI: 10.3390/app11115110. https://www.mdpi.com/2076-3417/11/11/5110.",
+  "url": "https://www.mdpi.com/2076-3417/11/11/5110"
+ },
+ {
+  "num": 9,
+  "text": "Ond\u0159ej Harcuba and Pavel Vrba. 2015. Ontologies for flexible production systems. In 2015 IEEE 20th Conference on Emerging Technologies & Factory Automation (ETFA). IEEE, 1\u20138.",
+  "url": ""
+ },
+ {
+  "num": 10,
+  "text": "Herv\u00e9 Panetto, Michele Dassisti, and Angela Tursi. 2012. Onto-pdm: product-driven ontology for product data management in- teroperability within manufacturing process environment. Advanced Engineering Informatics, 26, 2, 334\u2013348.",
+  "url": ""
+ },
+ {
+  "num": 11,
+  "text": "Qiushi Cao, Ahmed Samet, Cecilia Zanni-Merk, Fran\u00e7ois de Bertrand de Beuvron, and Christoph Reich. 2020. Combining Chron- icle Mining and Semantics for Predictive Maintenance in Manufacturing Processes. Semantic Web, 11, 6, 927\u2013948.",
+  "url": ""
+ },
+ {
+  "num": 12,
+  "text": "Sadeer Beden, Qiushi Cao, and Arnold Beckmann. 2021. SCRO: A Domain Ontology for Describing Steel Cold Rolling Processes towards Industry 4.0. Information, 12, 8. ISSN: 2078-2489. DOI: 10.3390/info12080304. https://www.mdpi.com/2078- 2489/12/8/304.",
+  "url": "https://www.mdpi.com/2078-"
+ },
+ {
+  "num": 13,
+  "text": "Marco Kainzner, Christoph Kl\u00f6sch, Dominik Filipiak, Tek Raj Chhetri, and Anna Fensel. 2021. Poster: Towards Reusable On- tology Alignment for Manufacturing Maintenance. In CEUR workshop proceedings series (Vol-2941). SEMANTiCS 2021 EU, Amsterdam, the Netherlands. http://ceur-ws.org/Vol-2941/paper9.pdf.",
+  "url": "http://ceur-ws.org/Vol-2941/paper9.pdf"
+ },
+ {
+  "num": 14,
+  "text": "T. Kjellberg, A. von Euler-Chelpin, M. Hedlind, M. Lundgren, G. Sivard, and D. Chen. 2009. The Machine Tool Model \u2014 A Core Part of the Digital Factory. CIRP Annals, 58, 1, 425\u2013428. ISSN: 0007-8506. DOI: https://doi.org/10.1016/j.cirp.2009. 03.035. https://www.sciencedirect.com/science/article/pii/S0007850609001073.",
+  "url": "https://www.sciencedirect.com/science/article/pii/S0007850609001073"
+ },
+ {
+  "num": 15,
+  "text": "Luis Ramos, Richard Gil, Dimitra Anastasiou, and Maria J. Martin-Bautista. 2014. Towards a Machine of a Process (MOP) On- tology to Facilitate e-Commerce of Industrial Machinery. Comput. Ind., 65, 1, 108\u2013115. ISSN: 0166-3615. DOI: 10.1016 / j . compind.2013.07.012. https://doi.org/10.1016/j.compind.2013.07.012.",
+  "url": "https://doi.org/10.1016/j.compind.2013.07.012"
+ },
+ {
+  "num": 16,
+  "text": "COMPOSITION Consortium. 2021. D6.8 Collaborative Manufacturing Services Ontology and Language II. https : / / www . composition - project . eu / wp - content / uploads / 2019 / 03 / D6.8 _ Collaborative _ Manufacturing _ Services _ Ontology_and_Language_II.pdf, Last accessed on 2022-02-15. (2021).",
+  "url": ""
+ },
+ {
+  "num": 17,
+  "text": "V\u00edctor Julio Ram\u00edrez-Dur\u00e1n, Idoia Berges, and Arantza Illarramendi. 2020. ExtruOnt: An Ontology for Describing a Type of Manufacturing Machine for Industry 4.0 Systems. Semantic Web, 11, 887\u2013909.",
+  "url": ""
+ },
+ {
+  "num": 18,
+  "text": "Qiushi Cao, Cecilia Zanni-Merk, Ahmed Samet, Christoph Reich, de Bertrand de Beuvron. Fran\u00e7ois, Arnold Beckmann, and Giannetti. Cinzia. 2022. KSPMI: A Knowledge-based System for Predictive Maintenance in Industry 4.0. Robotics and Computer- Integrated Manufacturing, 74, 102281. ISSN: 0736-5845. DOI: https://doi.org/10.1016/j.rcim.2021.102281. https: //www.sciencedirect.com/science/article/pii/S0736584521001617.",
+  "url": "https://doi.org/10.1016/j.rcim.2021.102281"
+ },
+ {
+  "num": 19,
+  "text": "Qiushi Cao, Franco Giustozzi, Cecilia Zanni-Merk, Fran\u00e7ois de Bertrand de Beuvron, and Christoph Reich. 2019. Smart condition monitoring for industry 4.0 manufacturing processes: an ontology-based approach. Cybernetics and Systems, 50, 2, 82\u201396. DOI: 10.1080/01969722.2019.1565118. eprint: https://doi.org/10.1080/01969722.2019.1565118. https://doi.org/ 10.1080/01969722.2019.1565118.",
+  "url": "https://doi.org/"
+ },
+ {
+  "num": 20,
+  "text": "Olga Kovalenko, Irl\u00e1n Grangel-Gonz\u00e1lez, Marta Sabou, Arndt L\u00fcder, Stefan Biffl, S\u00f6ren Auer, and Maria-Esther Vidal. 2018. Automationml ontology: modeling cyber-physical systems for industry 4.0. IOS Press Journal, 1.",
+  "url": ""
+ },
+ {
+  "num": 21,
+  "text": "Rimel Bendadouche, Catherine Roussey, Gil De Sousa, Jean-Pierre Chanet, and Kun Mean Hou. 2012. Extension of the semantic sensor network ontology for wireless sensor networks: the stimulus-wsnnode-communication pattern. In 5th International Work- shop on Semantic Sensor Networks in conjunction with the 11th International Semantic Web Conference (ISWC), 16\u2013p.",
+  "url": ""
+ },
+ {
+  "num": 22,
+  "text": "Amelie Gyrard, Soumya Kanti Datta, Christian Bonnet, and Karima Boudaoud. 2015. Integrating machine-to-machine measure- ment framework into onem2m architecture. In 2015 17th Asia-Pacific Network Operations and Management Symposium (AP- NOMS). IEEE, 364\u2013367.",
+  "url": ""
+ },
+ {
+  "num": 23,
+  "text": "Holger Neuhaus and Michael Compton. 2009. The semantic sensor network ontology. In AGILE workshop on challenges in geospa- tial data harmonisation, Hannover, Germany, 1\u201333.",
+  "url": ""
+ },
+ {
+  "num": 24,
+  "text": "Kudirat Ayinla, Edlira Vakaj, Franco Cheung, and Abdel-Rahman H. Tawil. 2021. A Semantic Offsite Construction Digital Twin- Offsite Manufacturing Production Workflow (OPW) Ontology. In.",
+  "url": ""
+ },
+ {
+  "num": 25,
+  "text": "Luca Mazzola, Patrick Kapahnke, Marko Vujic, and Matthias Klusch. 2016. CDM-Core: A Manufacturing Domain Ontology in OWL2 for Production and Maintenance. In KEOD.",
+  "url": ""
+ },
+ {
+  "num": 26,
+  "text": "Mohamed Hedi Karray, Farhad Ameri, Melinda Hodkiewicz, and Thierry Louge. 2019. ROMAIN: Towards a BFO Compliant Reference Ontology for Industrial Maintenance. Applied Ontology, 14, 2, 155\u2013177.",
+  "url": ""
+ },
+ {
+  "num": 27,
+  "text": "Irl\u00e1n Grangel-Gonz\u00e1lez, Paul Baptista, Lavdim Halilaj, Steffen Lohmann, Maria-Esther Vidal, Christian Mader, and S\u00f6ren Auer. 2017. The industry 4.0 standards landscape from a semantic integration perspective. In 2017 22nd IEEE International Conference on Emerging Technologies and Factory Automation (ETFA), 1\u20138. DOI: 10.1109/ETFA.2017.8247584.",
+  "url": ""
+ },
+ {
+  "num": 28,
+  "text": "Boulos El Asmar, Syrine Chelly, and Michael F\u00e4rber. 2020. AWARE: An Ontology for Situational Awareness of Autonomous Vehicles in Manufacturing. (2020).",
+  "url": ""
+ },
+ {
+  "num": 29,
+  "text": "M. C. May, L. Kiefer, A. Kuhnle, and G. Lanza. 2022. Ontology-based production simulation with ontologysim. Applied Sciences (Switzerland), 12, 3, Art.\u2013Nr.: 1608. ISSN: 2076-3417. DOI: 10.3390/app12031608.",
+  "url": ""
+ },
+ {
+  "num": 30,
+  "text": "Christian Block, Dominik Lins, and Bernd Kuhlenk\u00f6tter. 2018. Approach for a simulation-based and event-driven production planning and control in decentralized manufacturing execution systems. Procedia CIRP, 72, 1351\u20131356. 51st CIRP Conference on Manufacturing Systems. ISSN: 2212-8271. DOI: https : / / doi . org / 10.1016 / j . procir . 2018.03.204. https : //www.sciencedirect.com/science/article/pii/S2212827118303639.",
+  "url": ""
+ }
+]

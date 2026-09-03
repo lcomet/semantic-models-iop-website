@@ -471,32 +471,38 @@ h4.section-heading .num{ font-size: 13px; }
   border-radius: var(--radius-m);
   background: var(--surface);
   overflow: hidden;
-  max-width: 460px;
+  max-width: 560px;
 }
 .fig-block .fig-frame{
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--surface-2);
-  aspect-ratio: 1075 / 1521;
-  overflow: hidden;
+  padding: 18px;
 }
 .fig-block img{
   display: block;
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  height: auto;
   cursor: zoom-in;
-  object-fit: cover;
-  object-position: top center;
   transition: transform 200ms ease;
 }
-.fig-block:hover img{ transform: scale(1.02); }
-.fig-block .zoom-hint{
-  font-family: var(--font-mono);
-  font-size: 10px;
+.fig-block:hover img{ transform: scale(1.015); }
+.fig-block.fig-group{ max-width: 720px; }
+.fig-group-imgs{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+}
+.fig-group-imgs .fig-frame{ padding: 14px; }
+.fig-subcaption{
+  font-family: var(--font-ui) !important;
+  font-size: 12px !important;
   color: var(--ink-faint);
-  padding: 0 16px 12px;
-  margin-top: -4px;
+  text-align: center;
+  margin: 6px 0 10px !important;
+  max-width: none !important;
 }
 .fig-caption{
   padding: 12px 16px;
@@ -505,12 +511,142 @@ h4.section-heading .num{ font-size: 13px; }
   line-height: 1.5;
   border-top: 1px solid var(--border);
 }
-.fig-caption .fig-num{
+.fig-num{
   font-family: var(--font-mono);
   color: var(--accent);
   font-weight: 600;
   margin-right: 6px;
+  white-space: nowrap;
 }
+.inline-img-wrap{
+  margin: 10px 0 24px;
+  text-align: center;
+}
+.inline-img{
+  max-width: 380px;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-s);
+}
+.concept-img{
+  display: block;
+  max-width: 300px;
+  margin: 12px 0 0;
+  border-radius: var(--radius-s);
+}
+
+/* data tables (from real LaTeX tabular content) */
+.datatable-wrap{
+  margin: 8px 0 26px;
+}
+.table-caption{
+  font-family: var(--font-ui) !important;
+  font-size: 13.5px !important;
+  color: var(--ink-soft) !important;
+  margin: 0 0 8px !important;
+  max-width: none !important;
+}
+.datatable-scroll{ overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-m); }
+.datatable{
+  border-collapse: collapse;
+  width: 100%;
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+}
+.datatable th, .datatable td{
+  border-bottom: 1px solid var(--border);
+  padding: 9px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.datatable thead th{
+  background: var(--surface-2);
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.datatable tbody tr:last-child td{ border-bottom: none; }
+.datatable tbody tr:hover{ background: var(--surface-2); }
+
+.reslist-wrap{ margin: 8px 0 26px; }
+.reslist{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  max-width: 66ch;
+}
+.reslist li{
+  padding: 10px 14px;
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.5;
+}
+.reslist li:last-child{ border-bottom: none; }
+.reslist li:hover{ background: var(--surface-2); }
+
+/* abbreviations */
+.abbrev-list{ margin: 0 0 20px; max-width: 66ch; }
+.abbrev-row{
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.abbrev-row dt{
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+.abbrev-row dd{ margin: 0; color: var(--ink-soft); }
+
+/* inline: acronyms, citations, cross-refs, code chips */
+abbr.acro, abbr.acro-full{
+  text-decoration: none;
+  border-bottom: 1px dotted var(--ink-faint);
+  cursor: help;
+}
+a.cite{
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  color: var(--accent);
+  text-decoration: none;
+  margin: 0 1px;
+}
+a.cite:hover{ text-decoration: underline; }
+a.xref{ text-decoration: none; border-bottom: 1px dotted var(--accent); }
+.xref-broken{ color: var(--ink-faint); }
+.section code{
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.section .chip{
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 1px 7px;
+  border-radius: 5px;
+}
+.section .chip code{ background: none; padding: 0; }
+sup.footnote-marker{
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--accent);
+  cursor: help;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 0 3px;
+  margin-left: 2px;
+  text-transform: uppercase;
+}
+.ref-link{ text-decoration: none; margin-left: 4px; }
 
 /* ---------------- ontology comparison matrix ---------------- */
 .mtx-wrap{
