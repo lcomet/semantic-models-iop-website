@@ -41,6 +41,10 @@
     return `assets/pages/page-${String(page).padStart(2, '0')}.jpg`;
   }
 
+  function stripTags(html) {
+    return (html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
   function renderListItem(it) {
     const nested = it.blocks && it.blocks.length ? it.blocks.map(renderBlock).join('\n') : '';
     return `<li>${it.html}${nested}</li>`;
@@ -156,12 +160,128 @@
     return level === 1 ? 'h2' : level === 2 ? 'h3' : 'h4';
   }
 
-  function renderSection(s) {
-    const tag = headingTag(s.level);
+  // -------- breadcrumbs (ancestor chain for the current page) --------
+  function breadcrumbFor(s) {
+    if (!s.number) return '';
+    const parts = String(s.number).split('.');
+    const crumbs = [];
+    for (let i = 1; i < parts.length; i++) {
+      const anc = parts.slice(0, i).join('.');
+      const ancSec = SECTIONS.find(x => x.number === anc);
+      if (ancSec) crumbs.push(`<a href="#${ancSec.id}">${stripTags(ancSec.title)}</a>`);
+    }
+    if (!crumbs.length) return '';
+    return `<div class="breadcrumb">${crumbs.join(' <span class="sep">/</span> ')}</div>`;
+  }
+
+  // -------- render a single section as its own page --------
+  function renderSectionPage(s) {
     const numHtml = s.number ? `<span class="num">${escapeHtml(s.number)}</span>` : '';
-    const heading = `<${tag} id="${s.id}" class="section-heading">${numHtml}${s.title}<a class="anchor-link" href="#${s.id}" aria-label="Link to this section">#</a></${tag}>`;
+    const crumb = breadcrumbFor(s);
     const body = s.blocks.map(renderBlock).join('\n');
-    return `<section class="section section-l${s.level}" id="wrap-${s.id}">${heading}${body}</section>`;
+    return `<article class="page">
+      ${crumb}
+      <h1 class="page-title" id="${s.id}">${numHtml}${s.title}<a class="anchor-link" href="#${s.id}" aria-label="Link to this section">#</a></h1>
+      <div class="section">${body}</div>
+      ${buildPageNav(s)}
+    </article>`;
+  }
+
+  function buildPageNav(s) {
+    const idx = SECTIONS.findIndex(x => x.id === s.id);
+    const prev = idx > 0 ? SECTIONS[idx - 1] : null;
+    const next = idx >= 0 && idx < SECTIONS.length - 1 ? SECTIONS[idx + 1] : null;
+    return `<nav class="pagenav">
+      ${prev ? `<a class="prev" href="#${prev.id}"><div class="dir">Previous</div><div class="ttl">${stripTags(prev.title)}</div></a>` : '<span></span>'}
+      ${next ? `<a class="next" href="#${next.id}"><div class="dir">Next</div><div class="ttl">${stripTags(next.title)}</div></a>` : '<span></span>'}
+    </nav>`;
+  }
+
+  // -------- TOC --------
+  function buildTOC(sections) {
+    const home = `<a class="toc-link toc-home" data-target="" data-text="overview home" href="#">Overview</a>`;
+    els.toc.innerHTML = home + sections.map(s => {
+      const plainTitle = stripTags(s.title);
+      return `<a class="toc-link level-${s.level}" data-target="${s.id}" data-text="${escapeHtml(((s.number || '') + ' ' + plainTitle).toLowerCase())}" href="#${s.id}">${s.number ? `<span class="num">${escapeHtml(s.number)}</span>` : ''}${plainTitle}</a>`;
+    }).join('');
+  }
+
+  function setActiveTOC(id) {
+    document.querySelectorAll('.toc-link').forEach(a => {
+      a.classList.toggle('active', a.dataset.target === (id || ''));
+    });
+    const activeEl = document.querySelector('.toc-link.active');
+    if (activeEl && activeEl.scrollIntoView) {
+      activeEl.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  // -------- anchor -> owning-section map (for figures/tables/citations) --------
+  let ANCHOR_MAP = {};
+  function buildAnchorMap() {
+    const map = {};
+    function walk(blocks, sectionId) {
+      (blocks || []).forEach(b => {
+        if ((b.type === 'figure' || b.type === 'figure-group') && b.num) map['figure-' + b.num] = sectionId;
+        if (b.type === 'table' && b.num) map['table-' + b.num] = sectionId;
+        if (b.type === 'reflist') (b.items || []).forEach(it => { map['ref-' + it.key] = sectionId; });
+        if (b.type === 'ul' || b.type === 'ol') (b.items || []).forEach(it => walk(it.blocks, sectionId));
+        if (b.type === 'callout-blocks' || b.type === 'raw') walk(b.blocks, sectionId);
+      });
+    }
+    SECTIONS.forEach(s => walk(s.blocks, s.id));
+    return map;
+  }
+
+  // -------- navigation / routing --------
+  let currentSectionId = null;
+
+  function updateSectionProgress() {
+    if (!currentSectionId) { els.progress.style.width = '0%'; return; }
+    const idx = SECTIONS.findIndex(s => s.id === currentSectionId);
+    const pct = idx >= 0 ? ((idx + 1) / SECTIONS.length) * 100 : 0;
+    els.progress.style.width = pct + '%';
+  }
+
+  function showSection(id, scrollToAnchor) {
+    currentSectionId = id || null;
+    if (!id) {
+      els.content.innerHTML = buildDocHeader();
+      document.title = 'Guidelines for the Creation of Semantic Models in the IoP';
+    } else {
+      const s = SECTIONS.find(x => x.id === id);
+      if (!s) { showSection(null); return; }
+      els.content.innerHTML = renderSectionPage(s);
+      document.title = stripTags(s.title) + ' · Semantic Models in the IoP';
+    }
+    setActiveTOC(currentSectionId);
+    attachLightboxHandlers();
+    attachMatrixHandlers();
+    updateSectionProgress();
+
+    if (scrollToAnchor) {
+      requestAnimationFrame(() => {
+        const el = document.getElementById(scrollToAnchor);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('flash-highlight');
+          setTimeout(() => el.classList.remove('flash-highlight'), 1600);
+        } else {
+          window.scrollTo(0, 0);
+        }
+      });
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }
+
+  function navigateToHash(hash) {
+    if (!hash) { showSection(null); return; }
+    const target = SECTIONS.find(s => s.id === hash);
+    if (target) { showSection(hash); return; }
+    const owner = ANCHOR_MAP[hash];
+    if (owner) { showSection(owner, hash); return; }
+    showSection(null);
   }
 
   function buildDocHeader() {
@@ -196,10 +316,7 @@
   }
 
   function render(sections) {
-    const html = sections.map(renderSection).join('\n');
-    els.content.innerHTML = buildDocHeader() + html + buildPageNav();
-    attachLightboxHandlers();
-    attachMatrixHandlers();
+    // kept for API compatibility; actual rendering now happens per-page via showSection
   }
 
   function attachMatrixHandlers() {
@@ -256,65 +373,12 @@
     });
   }
 
-  function buildPageNav() {
-    return `<nav class="pagenav" id="pagenav"></nav>`;
-  }
-
-  function updatePageNav(currentId) {
-    const nav = document.getElementById('pagenav');
-    if (!nav) return;
-    const idx = SECTIONS.findIndex(s => s.id === currentId);
-    const prev = idx > 0 ? SECTIONS[idx - 1] : null;
-    const next = idx >= 0 && idx < SECTIONS.length - 1 ? SECTIONS[idx + 1] : null;
-    nav.innerHTML = `
-      ${prev ? `<a class="prev" href="#${prev.id}"><div class="dir">Previous</div><div class="ttl">${prev.title}</div></a>` : '<span></span>'}
-      ${next ? `<a class="next" href="#${next.id}"><div class="dir">Next</div><div class="ttl">${next.title}</div></a>` : '<span></span>'}
-    `;
-  }
-
-  // -------- TOC --------
-  function buildTOC(sections) {
-    els.toc.innerHTML = sections.map(s => {
-      const plainTitle = s.title.replace(/<[^>]+>/g, '');
-      return `<a class="toc-link level-${s.level}" data-target="${s.id}" data-text="${escapeHtml(((s.number || '') + ' ' + plainTitle).toLowerCase())}" href="#${s.id}">${s.number ? `<span class="num">${escapeHtml(s.number)}</span>` : ''}${plainTitle}</a>`;
-    }).join('');
-  }
-
-  function setActiveTOC(id) {
-    document.querySelectorAll('.toc-link').forEach(a => {
-      a.classList.toggle('active', a.dataset.target === id);
-    });
-  }
-
-  // -------- scroll spy + progress --------
-  let sectionEls = [];
-  function refreshSectionEls() {
-    sectionEls = SECTIONS.map(s => document.getElementById(s.id)).filter(Boolean);
-  }
-
   function onScroll() {
-    const scrollTop = window.scrollY;
-    const doc = document.documentElement;
-    const total = doc.scrollHeight - doc.clientHeight;
-    const pct = total > 0 ? Math.min(100, (scrollTop / total) * 100) : 0;
-    els.progress.style.width = pct + '%';
-
-    els.backToTop.classList.toggle('show', scrollTop > 800);
-
-    let current = null;
-    for (const el of sectionEls) {
-      const rect = el.getBoundingClientRect();
-      if (rect.top <= 120) current = el;
-      else break;
-    }
-    if (current) setActiveTOC(current.id);
+    els.backToTop.classList.toggle('show', window.scrollY > 600);
   }
 
   // -------- search --------
   let searchIndex = [];
-  function stripTags(html) {
-    return (html || '').replace(/<[^>]+>/g, ' ');
-  }
   function blockText(b) {
     let out = '';
     if (b.html) out += stripTags(b.html) + ' ';
@@ -424,12 +488,25 @@
   document.addEventListener('click', (e) => {
     const card = e.target.closest('[data-goto]');
     if (card) {
-      const target = document.getElementById(card.dataset.goto);
-      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      e.preventDefault();
+      const target = card.dataset.goto;
+      if (location.hash === '#' + target) {
+        navigateToHash(target);
+      } else {
+        location.hash = target;
+      }
     }
     const link = e.target.closest('.toc-link');
     if (link) {
       closeSidebar();
+    }
+    const brand = e.target.closest('.sidebar-header');
+    if (brand) {
+      if (location.hash && location.hash !== '#') {
+        location.hash = '';
+      } else {
+        navigateToHash(null);
+      }
     }
   });
 
@@ -439,29 +516,13 @@
     .then(sections => {
       SECTIONS = sections;
       buildTOC(sections);
-      render(sections);
       buildSearchIndex();
-      refreshSectionEls();
+      ANCHOR_MAP = buildAnchorMap();
       window.addEventListener('scroll', onScroll, { passive: true });
-      onScroll();
-
-      // page nav updates on hash / scroll spy target change
-      const observer = new MutationObserver(() => {});
-      let lastActive = null;
-      setInterval(() => {
-        const active = document.querySelector('.toc-link.active');
-        if (active && active.dataset.target !== lastActive) {
-          lastActive = active.dataset.target;
-          updatePageNav(lastActive);
-        }
-      }, 300);
-
-      if (location.hash) {
-        setTimeout(() => {
-          const el = document.querySelector(location.hash);
-          if (el) el.scrollIntoView({ block: 'start' });
-        }, 60);
-      }
+      window.addEventListener('hashchange', () => {
+        navigateToHash(decodeURIComponent(location.hash.slice(1)));
+      });
+      navigateToHash(decodeURIComponent(location.hash.slice(1)));
     })
     .catch(err => {
       els.content.innerHTML = `<p style="padding:40px;color:#a33">Could not load content.json — ${escapeHtml(err.message)}. If you're opening this file directly from disk, serve it over a local web server (e.g. <code>python3 -m http.server</code>) since browsers block fetch() on file:// URLs.</p>`;
