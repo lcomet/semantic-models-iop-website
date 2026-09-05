@@ -1,33 +1,4 @@
 [
-   {
-    "type": "p",
-    "html": "In case of questions regarding this guideline, please contact one of the following contact persons:"
-   },
-   {
-    "type": "ul",
-    "items": [
-     {
-      "html": "Lina Teresa Molinas Comet",
-      "blocks": [
-       {
-        "type": "ul",
-        "items": [
-         {
-          "html": "<a href=\"mailto:lina.molinas.comet@rwth-aachen.de\" target=\"_blank\" rel=\"noopener\">lina.molinas.comet@rwth-aachen.de</a> or",
-          "blocks": []
-         },
-         {
-          "html": "<a href=\"mailto:linamolinascomet@protonmail.com\" target=\"_blank\" rel=\"noopener\">linamolinascomet@protonmail.com</a>",
-          "blocks": []
-         }
-        ]
-       }
-      ]
-     }
-    ]
-   }
-  ]
- },
  {
   "id": "front-abbrev",
   "number": null,

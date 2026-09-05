@@ -316,8 +316,6 @@
       <p class="lede">A practical, unified guideline for Domain Experts and Knowledge Engineers on building, documenting, and publishing ontologies for manufacturing and production systems.</p>
       <div class="doc-meta">
         <span><strong>Author</strong> Lina Teresa Molinas&nbsp;Comet</span>
-        <span><strong>Reviewers</strong> Patrick Sapel · Iraklis Dimitriadis</span>
-        <span><strong>Source</strong> 43-page PDF, converted for the web</span>
       </div>
       <a class="start-reading" href="#sec-1">Start reading — 1. Introduction <span aria-hidden="true">→</span></a>
       <p class="doc-cards-label">Or jump straight to a topic</p>
