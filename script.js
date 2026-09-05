@@ -174,11 +174,35 @@
     return `<div class="breadcrumb">${crumbs.join(' <span class="sep">/</span> ')}</div>`;
   }
 
+  // -------- children of a chapter/section (for empty "divider" pages) --------
+  function directChildren(s) {
+    if (!s.number) return [];
+    const prefix = s.number + '.';
+    const depth = String(s.number).split('.').length + 1;
+    return SECTIONS.filter(x => x.number && String(x.number).startsWith(prefix) && String(x.number).split('.').length === depth);
+  }
+
+  function childIndexHtml(s) {
+    const children = directChildren(s);
+    if (!children.length) return '';
+    const cards = children.map(c => {
+      const preview = stripTags((c.blocks.find(b => b.type === 'p') || {}).html || '').slice(0, 110);
+      return `<a class="child-card" href="#${c.id}">
+        <span class="child-num">${escapeHtml(c.number)}</span>
+        <span class="child-title">${stripTags(c.title)}</span>
+        ${preview ? `<span class="child-preview">${escapeHtml(preview)}${preview.length >= 110 ? '…' : ''}</span>` : ''}
+      </a>`;
+    }).join('');
+    return `<div class="child-index"><p class="child-index-label">In this chapter</p><div class="child-grid">${cards}</div></div>`;
+  }
+
   // -------- render a single section as its own page --------
   function renderSectionPage(s) {
     const numHtml = s.number ? `<span class="num">${escapeHtml(s.number)}</span>` : '';
     const crumb = breadcrumbFor(s);
-    const body = s.blocks.map(renderBlock).join('\n');
+    const body = s.blocks.length
+      ? s.blocks.map(renderBlock).join('\n')
+      : childIndexHtml(s) || '<p class="empty-note">This section has no content of its own — use the sidebar to browse its subsections.</p>';
     return `<article class="page">
       ${crumb}
       <h1 class="page-title" id="${s.id}">${numHtml}${s.title}<a class="anchor-link" href="#${s.id}" aria-label="Link to this section">#</a></h1>
