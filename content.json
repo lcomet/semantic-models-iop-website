@@ -2067,7 +2067,15 @@
       "A catalogue of exemplary ontologies"
      ]
     ]
-   },
+   }
+  ]
+ },
+ {
+  "id": "sec-bibliography",
+  "number": null,
+  "title": "Bibliography",
+  "level": 1,
+  "blocks": [
    {
     "type": "reflist",
     "items": [
@@ -2826,7 +2834,15 @@
      }
     ],
     "sourceNote": "Reconstructed from images/domainontologiestable.pdf in the guideline repository."
-   },
+   }
+  ]
+ },
+ {
+  "id": "sec-A-2-refs",
+  "number": null,
+  "title": "References (Domain Ontologies Catalogue)",
+  "level": 2,
+  "blocks": [
    {
     "type": "reflist",
     "items": [

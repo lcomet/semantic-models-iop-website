@@ -319,19 +319,21 @@
         <span><strong>Reviewers</strong> Patrick Sapel · Iraklis Dimitriadis</span>
         <span><strong>Source</strong> 43-page PDF, converted for the web</span>
       </div>
+      <a class="start-reading" href="#sec-1">Start reading — 1. Introduction <span aria-hidden="true">→</span></a>
+      <p class="doc-cards-label">Or jump straight to a topic</p>
       <div class="doc-cards">
         <button class="doc-card" data-goto="sec-2">
-          <div class="n">01</div>
+          <div class="n">2</div>
           <h3>Fundamentals</h3>
           <p>Classes, properties, domains &amp; ranges — the core vocabulary of an ontology.</p>
         </button>
         <button class="doc-card" data-goto="sec-3-2-1">
-          <div class="n">02</div>
+          <div class="n">3.2.1</div>
           <h3>The workflow</h3>
           <p>An 11-step process from use case to a published, maintained ontology.</p>
         </button>
         <button class="doc-card" data-goto="sec-7">
-          <div class="n">03</div>
+          <div class="n">7</div>
           <h3>IoP ontologies</h3>
           <p>Upper, support and domain ontologies to reuse instead of starting from scratch.</p>
         </button>
