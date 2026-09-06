@@ -16,6 +16,11 @@
     lightbox: document.getElementById('lightbox'),
     lightboxImg: document.getElementById('lightbox-img'),
     lightboxClose: document.getElementById('lightbox-close'),
+    pageProgress: document.getElementById('page-progress'),
+    toast: document.getElementById('toast'),
+    cmdkOverlay: document.getElementById('cmdk-overlay'),
+    cmdkInput: document.getElementById('cmdk-input'),
+    cmdkResults: document.getElementById('cmdk-results'),
   };
 
   let SECTIONS = [];
@@ -206,9 +211,145 @@
     return `<article class="page">
       ${crumb}
       <h1 class="page-title" id="${s.id}">${numHtml}${s.title}<a class="anchor-link" href="#${s.id}" aria-label="Link to this section">#</a></h1>
+      <div class="page-toolbar">
+        <button class="toolbar-btn" data-action="copy-link" data-id="${s.id}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L11.5 4.5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L12.5 19.5"/></svg>
+          Copy link
+        </button>
+        <button class="toolbar-btn" data-action="copy-md" data-id="${s.id}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16v16H4z"/><path d="M8 16v-6l3 3 3-3v6M17 9v6"/></svg>
+          Copy as Markdown
+        </button>
+      </div>
       <div class="section">${body}</div>
       ${buildPageNav(s)}
+      ${buildFeedbackWidget(s)}
     </article>`;
+  }
+
+  function buildFeedbackWidget(s) {
+    return `<div class="feedback" data-section="${s.id}">
+      <p class="feedback-q">Was this page helpful?</p>
+      <div class="feedback-btns">
+        <button class="fb-btn" data-val="up">👍 Yes</button>
+        <button class="fb-btn" data-val="down">👎 No</button>
+      </div>
+      <p class="feedback-thanks" hidden>Thanks for the feedback!</p>
+    </div>`;
+  }
+
+  function attachFeedbackHandlers() {
+    const widget = document.querySelector('.feedback');
+    if (!widget) return;
+    const sectionId = widget.dataset.section;
+    const key = 'fb:' + sectionId;
+    const saved = localStorage.getItem(key);
+    const btns = widget.querySelectorAll('.fb-btn');
+    const thanks = widget.querySelector('.feedback-thanks');
+    const q = widget.querySelector('.feedback-q');
+
+    function applyVoted(val) {
+      btns.forEach(b => {
+        b.disabled = true;
+        b.classList.toggle('selected', b.dataset.val === val);
+      });
+      q.hidden = true;
+      thanks.hidden = false;
+    }
+
+    if (saved) applyVoted(saved);
+
+    btns.forEach(b => {
+      b.addEventListener('click', () => {
+        localStorage.setItem(key, b.dataset.val);
+        applyVoted(b.dataset.val);
+      });
+    });
+  }
+
+  // -------- copy link / copy as markdown --------
+  function showToast(msg) {
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => els.toast.classList.remove('show'), 1800);
+  }
+
+  function copyToClipboard(text, successMsg) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => showToast(successMsg)).catch(() => showToast('Could not copy — try again'));
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); showToast(successMsg); } catch (e) { showToast('Could not copy — try again'); }
+      document.body.removeChild(ta);
+    }
+  }
+
+  function mdEscape(s) {
+    return (s || '').replace(/[*_`]/g, '\\$&');
+  }
+
+  function blockToMarkdown(b, depth) {
+    depth = depth || 0;
+    const pad = '  '.repeat(depth);
+    switch (b.type) {
+      case 'p':
+        return stripTags(b.html) + '\n';
+      case 'concept':
+        return '> _' + stripTags(b.html) + '_\n' + (b.image ? `\n![](${b.image})\n` : '');
+      case 'callout': {
+        const label = { remark: 'Remark', note: 'Note', hint: 'Hint', facts: 'Facts' }[b.kind] || 'Note';
+        return `> **${label}:** ${stripTags(b.html)}\n`;
+      }
+      case 'callout-blocks': {
+        const label = { facts: 'Facts' }[b.kind] || 'Note';
+        return `> **${label}:**\n` + b.blocks.map(bb => '> ' + blockToMarkdown(bb, depth)).join('');
+      }
+      case 'ul':
+        return b.items.map(it => `${pad}- ${stripTags(it.html)}\n` + (it.blocks || []).map(bb => blockToMarkdown(bb, depth + 1)).join('')).join('');
+      case 'ol':
+        return b.items.map((it, i) => `${pad}${(b.start || 1) + i}. ${stripTags(it.html)}\n` + (it.blocks || []).map(bb => blockToMarkdown(bb, depth + 1)).join('')).join('');
+      case 'figure':
+        return `**Figure ${b.num}.** ${stripTags(b.caption)}\n\n![Figure ${b.num}](${b.src})\n`;
+      case 'figure-group':
+        return `**Figure ${b.num}.** ${stripTags(b.caption)}\n\n` + b.images.map(im => `![](${im.src})`).join(' ') + '\n';
+      case 'inline-image':
+        return `![](${b.src})\n`;
+      case 'table': {
+        if (!b.header || !b.header.length) return '';
+        const cap = b.num ? `**Table ${b.num}.** ${stripTags(b.caption)}\n\n` : '';
+        const head = '| ' + b.header.map(h => stripTags(h)).join(' | ') + ' |';
+        const sep = '| ' + b.header.map(() => '---').join(' | ') + ' |';
+        const rows = b.rows.map(r => '| ' + r.map(c => stripTags(c).replace(/\|/g, '\\|')).join(' | ') + ' |').join('\n');
+        return `${cap}${head}\n${sep}\n${rows}\n`;
+      }
+      case 'abbreviations':
+        return b.items.map(it => `- **${it.abbr}** — ${stripTags(it.full)}`).join('\n') + '\n';
+      case 'reflist':
+        return b.items.map(it => `[${it.num}] ${stripTags(it.text)}${it.url ? ' ' + it.url : ''}`).join('\n') + '\n';
+      case 'ontology-matrix': {
+        const cols = b.columns.map(c => c.key);
+        const head = '| Ontology | ' + cols.join(' | ') + ' | Type | Ref |';
+        const sep = '| --- ' + cols.map(() => '| :-: ').join('') + '| --- | --- |';
+        const rows = b.items.map(r => `| ${r.name} | ` + cols.map(c => r.domains.includes(c) ? '✓' : '').join(' | ') + ` | ${r.classif} | ${r.ref} |`).join('\n');
+        return `${head}\n${sep}\n${rows}\n`;
+      }
+      case 'raw':
+        return b.blocks.map(bb => blockToMarkdown(bb, depth)).join('');
+      default:
+        return '';
+    }
+  }
+
+  function sectionToMarkdown(s) {
+    const heading = '#'.repeat(Math.min(s.level + 1, 6)) + ' ' + (s.number ? s.number + ' ' : '') + stripTags(s.title);
+    const body = s.blocks.map(b => blockToMarkdown(b, 0)).join('\n');
+    return `${heading}\n\n${body}`.trim() + '\n';
   }
 
   function buildPageNav(s) {
@@ -281,6 +422,7 @@
     setActiveTOC(currentSectionId);
     attachLightboxHandlers();
     attachMatrixHandlers();
+    attachFeedbackHandlers();
     updateSectionProgress();
 
     if (scrollToAnchor) {
@@ -293,9 +435,11 @@
         } else {
           window.scrollTo(0, 0);
         }
+        onScroll();
       });
     } else {
       window.scrollTo(0, 0);
+      onScroll();
     }
   }
 
@@ -316,6 +460,7 @@
       <p class="lede">A practical, unified guideline for Domain Experts and Knowledge Engineers on building, documenting, and publishing ontologies for manufacturing and production systems.</p>
       <div class="doc-meta">
         <span><strong>Author</strong> Lina Teresa Molinas&nbsp;Comet</span>
+        <span><strong>Source</strong> 43-page PDF, converted for the web</span>
       </div>
       <a class="start-reading" href="#sec-1">Start reading — 1. Introduction <span aria-hidden="true">→</span></a>
       <p class="doc-cards-label">Or jump straight to a topic</p>
@@ -399,6 +544,10 @@
 
   function onScroll() {
     els.backToTop.classList.toggle('show', window.scrollY > 600);
+    const doc = document.documentElement;
+    const total = doc.scrollHeight - doc.clientHeight;
+    const pct = total > 0 ? Math.min(100, (window.scrollY / total) * 100) : 0;
+    els.pageProgress.style.width = pct + '%';
   }
 
   // -------- search --------
@@ -473,6 +622,7 @@
     if (e.key === 'Escape') {
       els.lightbox.classList.remove('show');
       closeSidebar();
+      closeCmdk();
     }
   });
 
@@ -531,6 +681,93 @@
       } else {
         navigateToHash(null);
       }
+    }
+    const toolbarBtn = e.target.closest('.toolbar-btn');
+    if (toolbarBtn) {
+      const s = SECTIONS.find(x => x.id === toolbarBtn.dataset.id);
+      if (s) {
+        if (toolbarBtn.dataset.action === 'copy-link') {
+          copyToClipboard(location.origin + location.pathname + '#' + s.id, 'Link copied');
+        } else if (toolbarBtn.dataset.action === 'copy-md') {
+          copyToClipboard(sectionToMarkdown(s), 'Copied as Markdown');
+        }
+      }
+    }
+  });
+
+  // -------- command palette (⌘K / Ctrl+K) --------
+  let cmdkActiveIndex = -1;
+  let cmdkItems = [];
+
+  function openCmdk() {
+    els.cmdkOverlay.classList.add('show');
+    els.cmdkInput.value = '';
+    els.cmdkInput.focus();
+    renderCmdkResults('');
+  }
+  function closeCmdk() {
+    els.cmdkOverlay.classList.remove('show');
+  }
+
+  function cmdkMatches(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      return SECTIONS.slice(0, 8);
+    }
+    return searchIndex.filter(s => s.haystack.includes(q)).map(s => SECTIONS.find(x => x.id === s.id)).filter(Boolean).slice(0, 20);
+  }
+
+  function renderCmdkResults(query) {
+    cmdkItems = cmdkMatches(query);
+    cmdkActiveIndex = cmdkItems.length ? 0 : -1;
+    if (!cmdkItems.length) {
+      els.cmdkResults.innerHTML = `<div class="cmdk-empty">No matches for "${escapeHtml(query)}"</div>`;
+      return;
+    }
+    els.cmdkResults.innerHTML = cmdkItems.map((s, i) => {
+      const crumb = breadcrumbFor(s).replace(/<[^>]+>/g, '').trim();
+      return `<div class="cmdk-item${i === 0 ? ' active' : ''}" data-index="${i}" data-id="${s.id}">
+        <div class="cmdk-title">${s.number ? `<span class="cmdk-num">${escapeHtml(s.number)}</span>` : ''}${stripTags(s.title)}</div>
+        ${crumb ? `<div class="cmdk-crumb">${escapeHtml(crumb)}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  function cmdkSetActive(idx) {
+    const items = els.cmdkResults.querySelectorAll('.cmdk-item');
+    items.forEach(el => el.classList.remove('active'));
+    if (items[idx]) {
+      items[idx].classList.add('active');
+      items[idx].scrollIntoView({ block: 'nearest' });
+    }
+    cmdkActiveIndex = idx;
+  }
+
+  function cmdkGo(idx) {
+    const s = cmdkItems[idx];
+    if (!s) return;
+    closeCmdk();
+    location.hash = s.id;
+  }
+
+  els.cmdkInput.addEventListener('input', (e) => renderCmdkResults(e.target.value));
+  els.cmdkInput.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); cmdkSetActive(Math.min(cmdkActiveIndex + 1, cmdkItems.length - 1)); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); cmdkSetActive(Math.max(cmdkActiveIndex - 1, 0)); }
+    if (e.key === 'Enter') { e.preventDefault(); cmdkGo(cmdkActiveIndex); }
+    if (e.key === 'Escape') { e.preventDefault(); closeCmdk(); }
+  });
+  els.cmdkResults.addEventListener('click', (e) => {
+    const item = e.target.closest('.cmdk-item');
+    if (item) cmdkGo(Number(item.dataset.index));
+  });
+  els.cmdkOverlay.addEventListener('click', (e) => {
+    if (e.target === els.cmdkOverlay) closeCmdk();
+  });
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      if (els.cmdkOverlay.classList.contains('show')) closeCmdk(); else openCmdk();
     }
   });
 
