@@ -21,6 +21,10 @@
     cmdkOverlay: document.getElementById('cmdk-overlay'),
     cmdkInput: document.getElementById('cmdk-input'),
     cmdkResults: document.getElementById('cmdk-results'),
+    pageOutline: document.getElementById('page-outline'),
+    main: document.getElementById('main'),
+    displaySettingsBtn: document.getElementById('display-settings-btn'),
+    displaySettingsPanel: document.getElementById('display-settings-panel'),
   };
 
   let SECTIONS = [];
@@ -199,6 +203,36 @@
       </a>`;
     }).join('');
     return `<div class="child-index"><p class="child-index-label">In this chapter</p><div class="child-grid">${cards}</div></div>`;
+  }
+
+  // -------- on-this-page outline (figures/tables on the current page) --------
+  function buildPageOutline(s) {
+    const items = [];
+    function walk(blocks) {
+      (blocks || []).forEach(b => {
+        if ((b.type === 'figure' || b.type === 'figure-group') && b.num) items.push({ anchor: 'figure-' + b.num, label: 'Figure ' + b.num });
+        if (b.type === 'table' && b.num) items.push({ anchor: 'table-' + b.num, label: 'Table ' + b.num });
+        if (b.type === 'ul' || b.type === 'ol') (b.items || []).forEach(it => walk(it.blocks));
+        if (b.type === 'callout-blocks' || b.type === 'raw') walk(b.blocks);
+      });
+    }
+    walk(s.blocks);
+    return items;
+  }
+
+  function renderPageOutline(s) {
+    const items = buildPageOutline(s);
+    if (items.length < 2) {
+      els.pageOutline.innerHTML = '';
+      els.main.classList.remove('has-outline');
+      return;
+    }
+    els.main.classList.add('has-outline');
+    els.pageOutline.innerHTML = `
+      <p class="page-outline-label">On this page</p>
+      <nav class="page-outline-list">
+        ${items.map(it => `<a href="#${it.anchor}"><span class="ol-num">${it.label}</span></a>`).join('')}
+      </nav>`;
   }
 
   // -------- render a single section as its own page --------
@@ -409,15 +443,27 @@
   }
 
   function showSection(id, scrollToAnchor) {
+    const apply = () => renderSectionDOM(id, scrollToAnchor);
+    if (document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.startViewTransition(apply);
+    } else {
+      apply();
+    }
+  }
+
+  function renderSectionDOM(id, scrollToAnchor) {
     currentSectionId = id || null;
     if (!id) {
       els.content.innerHTML = buildDocHeader();
       document.title = 'Guidelines for the Creation of Semantic Models in the IoP';
+      els.pageOutline.innerHTML = '';
+      els.main.classList.remove('has-outline');
     } else {
       const s = SECTIONS.find(x => x.id === id);
-      if (!s) { showSection(null); return; }
+      if (!s) { renderSectionDOM(null); return; }
       els.content.innerHTML = renderSectionPage(s);
       document.title = stripTags(s.title) + ' · Semantic Models in the IoP';
+      renderPageOutline(s);
     }
     setActiveTOC(currentSectionId);
     attachLightboxHandlers();
@@ -653,6 +699,40 @@
     if (saved) { applyTheme(saved); return; }
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     applyTheme(prefersDark ? 'dark' : 'light');
+  })();
+
+  // -------- display settings (reading width / text size) --------
+  function applyDisplaySetting(kind, value) {
+    const root = document.documentElement;
+    const classPrefix = kind === 'width' ? 'width-' : 'text-';
+    ['narrow', 'normal', 'wide', 'small', 'large'].forEach(v => root.classList.remove(classPrefix + v));
+    root.classList.add(classPrefix + value);
+    localStorage.setItem('iop-' + kind, value);
+    els.displaySettingsPanel.querySelectorAll(`.settings-options[data-setting="${kind}"] .settings-opt`).forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.value === value);
+    });
+  }
+
+  els.displaySettingsPanel.querySelectorAll('.settings-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const group = btn.closest('.settings-options');
+      applyDisplaySetting(group.dataset.setting, btn.dataset.value);
+    });
+  });
+
+  els.displaySettingsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    els.displaySettingsPanel.classList.toggle('show');
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#display-settings')) {
+      els.displaySettingsPanel.classList.remove('show');
+    }
+  });
+
+  (function initDisplaySettings() {
+    applyDisplaySetting('width', localStorage.getItem('iop-width') || 'normal');
+    applyDisplaySetting('text', localStorage.getItem('iop-text') || 'normal');
   })();
 
   // -------- back to top --------

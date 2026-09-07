@@ -5,21 +5,31 @@
   "title": "Contact",
   "level": 1,
   "blocks": [
-    {
-      "type": "p",
-      "html": "In case of questions regarding this guideline, please contact me at:"
-    },
-    {
-      "type": "ul",
-      "items": [
-        {
+   {
+    "type": "p",
+    "html": "In case of questions regarding this guideline, please feel free to contact me."
+   },
+   {
+    "type": "ul",
+    "items": [
+     {
+      "html": "Lina Teresa Molinas Comet",
+      "blocks": [
+       {
+        "type": "ul",
+        "items": [
+         {
           "html": "<a href=\"mailto:linamolinascomet@gmail.com\" target=\"_blank\" rel=\"noopener\">linamolinascomet@gmail.com</a>",
           "blocks": []
-        }
+         }
+        ]
+       }
       ]
-    }
+     }
+    ]
+   }
   ]
-},
+ },
  {
   "id": "front-abbrev",
   "number": null,
