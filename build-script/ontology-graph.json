@@ -1,0 +1,45 @@
+{
+  "nodes": [
+    {"id": "PhysicalObject", "type": "class", "section": "sec-2-4-1"},
+    {"id": "Component", "type": "class", "section": "sec-2-4-1"},
+    {"id": "MachineComponent", "type": "class", "section": "sec-2-4-1"},
+    {"id": "Filter", "type": "class", "section": "sec-2-4-2"},
+    {"id": "Motor", "type": "class", "section": "sec-2-4-2"},
+    {"id": "Port", "type": "class", "section": "sec-2-4-2"},
+    {"id": "Valve", "type": "class", "section": "sec-2-4-2"},
+    {"id": "ProductComponent", "type": "class", "section": "sec-2-4-1"},
+    {"id": "Machine", "type": "class", "section": "sec-2-4-1"},
+    {"id": "Product", "type": "class", "section": "sec-2-4-1"},
+    {"id": "ProductLine", "type": "class", "section": "sec-2-3"},
+    {"id": "Process", "type": "class", "section": "sec-2-3"},
+    {"id": "ProcessType", "type": "class", "section": "sec-2-3"},
+    {"id": "Input", "type": "class", "section": "sec-2-3"},
+    {"id": "Output", "type": "class", "section": "sec-2-3"},
+    {"id": "Machinist", "type": "class", "section": "sec-2-3"},
+    {"id": "Company", "type": "class", "section": "sec-2-3"}
+  ],
+  "edges": [
+    {"source": "Component", "target": "PhysicalObject", "label": "subClassOf", "kind": "hierarchy", "section": "sec-2-4-1"},
+    {"source": "Machine", "target": "PhysicalObject", "label": "subClassOf", "kind": "hierarchy", "section": "sec-2-4-1"},
+    {"source": "Product", "target": "PhysicalObject", "label": "subClassOf", "kind": "hierarchy", "section": "sec-2-4-1"},
+    {"source": "MachineComponent", "target": "Component", "label": "subClassOf", "kind": "hierarchy", "section": "sec-2-4-1"},
+    {"source": "ProductComponent", "target": "Component", "label": "subClassOf", "kind": "hierarchy", "section": "sec-2-4-1"},
+    {"source": "Filter", "target": "MachineComponent", "label": "subClassOf", "kind": "hierarchy", "section": "sec-2-4-2"},
+    {"source": "Motor", "target": "MachineComponent", "label": "subClassOf", "kind": "hierarchy", "section": "sec-2-4-2"},
+    {"source": "Port", "target": "MachineComponent", "label": "subClassOf", "kind": "hierarchy", "section": "sec-2-4-2"},
+    {"source": "Valve", "target": "MachineComponent", "label": "subClassOf", "kind": "hierarchy", "section": "sec-2-4-2"},
+
+    {"source": "Machine", "target": "MachineComponent", "label": "hasMachineComponent", "kind": "property", "section": "sec-2-4-2"},
+    {"source": "Product", "target": "ProductComponent", "label": "hasProductComponent", "kind": "property", "section": "sec-2-4-2"},
+    {"source": "Product", "target": "Machine", "label": "isProducedBy", "kind": "property", "section": "sec-2-4-1"},
+    {"source": "Product", "target": "ProductLine", "label": "isPartOf", "kind": "property", "section": "sec-2-3"},
+
+    {"source": "Machine", "target": "Process", "label": "isUsedIn", "kind": "property", "section": "sec-2-3"},
+    {"source": "Process", "target": "Input", "label": "receives", "kind": "property", "section": "sec-2-3"},
+    {"source": "Process", "target": "Output", "label": "produces", "kind": "property", "section": "sec-2-3"},
+    {"source": "Process", "target": "ProcessType", "label": "has", "kind": "property", "section": "sec-2-3"},
+    {"source": "Machinist", "target": "Process", "label": "participatesIn", "kind": "property", "section": "sec-2-3"},
+    {"source": "Machinist", "target": "Machine", "label": "operates", "kind": "property", "section": "sec-2-3"},
+    {"source": "Machinist", "target": "Company", "label": "worksFor", "kind": "property", "section": "sec-2-3"}
+  ]
+}

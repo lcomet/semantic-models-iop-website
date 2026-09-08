@@ -235,6 +235,253 @@
       </nav>`;
   }
 
+  // -------- ontology graph explorer --------
+  let d3LoadPromise = null;
+  function loadD3() {
+    if (window.d3) return Promise.resolve();
+    if (d3LoadPromise) return d3LoadPromise;
+    d3LoadPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'assets/vendor/d3.min.js';
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+    return d3LoadPromise;
+  }
+
+  function renderGraphPage() {
+    return `<article class="page graph-page">
+      <p class="breadcrumb">Interactive</p>
+      <h1 class="page-title">Ontology Graph Explorer</h1>
+      <p class="graph-intro">The classes and relations from the guideline's running example (sections 2.3–2.4), as an interactive graph. Drag nodes, scroll or pinch to zoom, and click any node to see how it connects — with a link straight to where it's explained in the text.</p>
+      <div class="graph-toolbar">
+        <div class="graph-legend">
+          <span class="legend-item"><span class="legend-dot"></span>Class</span>
+          <span class="legend-item"><span class="legend-line hierarchy-line"></span>subClassOf</span>
+          <span class="legend-item"><span class="legend-line property-line"></span>object property</span>
+        </div>
+        <div class="graph-controls">
+          <button id="graph-zoom-out" class="icon-btn" aria-label="Zoom out">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <button id="graph-zoom-in" class="icon-btn" aria-label="Zoom in">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <button id="graph-reset" class="toolbar-btn">Reset view</button>
+        </div>
+      </div>
+      <div id="graph-canvas-wrap">
+        <p id="graph-loading">Loading graph…</p>
+        <svg id="graph-svg"></svg>
+        <div id="graph-infocard" class="graph-infocard" hidden></div>
+      </div>
+    </article>`;
+  }
+
+  let graphDataCache = null;
+
+  async function initOntologyGraph() {
+    const loadingEl = document.getElementById('graph-loading');
+    try {
+      await loadD3();
+      if (!graphDataCache) {
+        const res = await fetch('ontology-graph.json');
+        graphDataCache = await res.json();
+      }
+      if (!document.getElementById('graph-svg')) return; // navigated away already
+      if (loadingEl) loadingEl.style.display = 'none';
+      buildForceGraph(graphDataCache);
+      window.addEventListener('resize', onGraphResize);
+    } catch (err) {
+      if (loadingEl) loadingEl.textContent = 'Could not load the graph — try refreshing the page.';
+    }
+  }
+
+  let graphResizeTimer = null;
+  function onGraphResize() {
+    clearTimeout(graphResizeTimer);
+    graphResizeTimer = setTimeout(() => {
+      if (document.getElementById('graph-svg') && graphDataCache) buildForceGraph(graphDataCache);
+      else window.removeEventListener('resize', onGraphResize);
+    }, 250);
+  }
+
+  function buildForceGraph(data) {
+    const svgEl = document.getElementById('graph-svg');
+    const wrap = document.getElementById('graph-canvas-wrap');
+    if (!svgEl || !wrap) return;
+    const d3sel = window.d3;
+    const width = wrap.clientWidth;
+    const height = wrap.clientHeight || 560;
+
+    const svg = d3sel.select(svgEl).attr('viewBox', [0, 0, width, height]).attr('width', width).attr('height', height);
+    svg.selectAll('*').remove();
+
+    svg.append('defs').append('marker')
+      .attr('id', 'graph-arrow')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 24)
+      .attr('refY', 0)
+      .attr('markerWidth', 6.5)
+      .attr('markerHeight', 6.5)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('class', 'graph-arrowhead');
+
+    const zoomLayer = svg.append('g').attr('class', 'zoom-layer');
+    const nodes = data.nodes.map(d => Object.assign({}, d));
+    const links = data.edges.map(d => Object.assign({}, d));
+
+    const sim = d3sel.forceSimulation(nodes)
+      .force('link', d3sel.forceLink(links).id(d => d.id).distance(l => l.kind === 'hierarchy' ? 75 : 115).strength(0.65))
+      .force('charge', d3sel.forceManyBody().strength(-340))
+      .force('center', d3sel.forceCenter(width / 2, height / 2))
+      .force('collide', d3sel.forceCollide().radius(40));
+
+    const linkGroup = zoomLayer.append('g').attr('class', 'links')
+      .selectAll('g').data(links).join('g').attr('class', d => 'link-group ' + d.kind);
+
+    linkGroup.append('line')
+      .attr('class', d => 'link-line ' + d.kind)
+      .attr('marker-end', 'url(#graph-arrow)');
+
+    linkGroup.append('line')
+      .attr('class', 'link-hitbox')
+      .attr('stroke', 'transparent')
+      .attr('stroke-width', 14);
+
+    linkGroup.append('text')
+      .attr('class', 'link-label')
+      .attr('text-anchor', 'middle')
+      .text(d => d.label);
+
+    linkGroup.style('cursor', 'pointer').on('click', (event, d) => {
+      event.stopPropagation();
+      showGraphInfo({ id: d.label, kind: 'property', section: d.section, isEdge: true, from: d.source.id || d.source, to: d.target.id || d.target }, nodeGroup, linkGroup);
+    });
+
+    const nodeGroup = zoomLayer.append('g').attr('class', 'nodes')
+      .selectAll('g').data(nodes).join('g').attr('class', 'node-group')
+      .call(dragBehavior(sim));
+
+    nodeGroup.append('circle').attr('r', 27).attr('class', 'node-circle');
+    nodeGroup.append('text')
+      .attr('class', 'node-label')
+      .attr('text-anchor', 'middle')
+      .attr('dy', '0.32em')
+      .text(d => d.id.length > 11 ? d.id.slice(0, 10) + '…' : d.id);
+
+    nodeGroup.style('cursor', 'pointer').on('click', (event, d) => {
+      event.stopPropagation();
+      showGraphInfo(d, nodeGroup, linkGroup);
+    });
+
+    svg.on('click', () => { hideGraphInfo(); clearHighlight(nodeGroup, linkGroup); });
+
+    sim.on('tick', () => {
+      linkGroup.selectAll('line')
+        .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+      linkGroup.select('text')
+        .attr('x', d => (d.source.x + d.target.x) / 2)
+        .attr('y', d => (d.source.y + d.target.y) / 2 - 4);
+      nodeGroup.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+
+    function dragBehavior(sim) {
+      function started(event, d) {
+        if (!event.active) sim.alphaTarget(0.25).restart();
+        d.fx = d.x; d.fy = d.y;
+      }
+      function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+      function ended(event, d) {
+        if (!event.active) sim.alphaTarget(0);
+        d.fx = null; d.fy = null;
+      }
+      return d3sel.drag().on('start', started).on('drag', dragged).on('end', ended);
+    }
+
+    const zoomBehavior = d3sel.zoom().scaleExtent([0.4, 3]).on('zoom', (event) => {
+      zoomLayer.attr('transform', event.transform);
+    });
+    svg.call(zoomBehavior).on('dblclick.zoom', null);
+
+    sim.on('end', () => {
+      fitToView(nodes, width, height, svg, zoomBehavior, d3sel);
+    });
+    setTimeout(() => fitToView(nodes, width, height, svg, zoomBehavior, d3sel), 900);
+
+    const zoomInBtn = document.getElementById('graph-zoom-in');
+    const zoomOutBtn = document.getElementById('graph-zoom-out');
+    const resetBtn = document.getElementById('graph-reset');
+    if (zoomInBtn) zoomInBtn.onclick = () => svg.transition().call(zoomBehavior.scaleBy, 1.3);
+    if (zoomOutBtn) zoomOutBtn.onclick = () => svg.transition().call(zoomBehavior.scaleBy, 0.75);
+    if (resetBtn) resetBtn.onclick = () => fitToView(nodes, width, height, svg, zoomBehavior, d3sel, true);
+  }
+
+  function fitToView(nodes, width, height, svg, zoomBehavior, d3sel, animate) {
+    if (!nodes.length) return;
+    const pad = 50;
+    const xs = nodes.map(n => n.x).filter(v => typeof v === 'number');
+    const ys = nodes.map(n => n.y).filter(v => typeof v === 'number');
+    if (!xs.length) return;
+    const minX = Math.min(...xs) - pad, maxX = Math.max(...xs) + pad;
+    const minY = Math.min(...ys) - pad, maxY = Math.max(...ys) + pad;
+    const w = maxX - minX, h = maxY - minY;
+    const scale = Math.max(0.4, Math.min(1.4, Math.min(width / w, height / h)));
+    const tx = width / 2 - scale * (minX + maxX) / 2;
+    const ty = height / 2 - scale * (minY + maxY) / 2;
+    const transform = d3sel.zoomIdentity.translate(tx, ty).scale(scale);
+    const sel = animate ? svg.transition().duration(400) : svg;
+    sel.call(zoomBehavior.transform, transform);
+  }
+
+  function clearHighlight(nodeGroup, linkGroup) {
+    nodeGroup.classed('dim', false);
+    linkGroup.classed('dim', false);
+  }
+
+  function showGraphInfo(d, nodeGroup, linkGroup) {
+    const card = document.getElementById('graph-infocard');
+    if (!card) return;
+    const sectionObj = SECTIONS.find(s => s.id === d.section);
+    const sectionTitle = sectionObj ? stripTags(sectionObj.title) : '';
+    if (d.isEdge) {
+      card.innerHTML = `
+        <div class="gi-type">Object property</div>
+        <div class="gi-name">${escapeHtml(d.id)}</div>
+        <div class="gi-detail">${escapeHtml(d.from)} → ${escapeHtml(d.to)}</div>
+        ${sectionObj ? `<a class="gi-link" href="#${d.section}">Read in "${escapeHtml(sectionTitle)}" →</a>` : ''}
+      `;
+      nodeGroup.classed('dim', true);
+      linkGroup.classed('dim', l => l.label !== d.id);
+    } else {
+      const connected = new Set([d.id]);
+      linkGroup.each(function (l) {
+        const s = l.source.id || l.source, t = l.target.id || l.target;
+        if (s === d.id) connected.add(t);
+        if (t === d.id) connected.add(s);
+      });
+      nodeGroup.classed('dim', n => !connected.has(n.id));
+      linkGroup.classed('dim', l => {
+        const s = l.source.id || l.source, t = l.target.id || l.target;
+        return s !== d.id && t !== d.id;
+      });
+      card.innerHTML = `
+        <div class="gi-type">Class</div>
+        <div class="gi-name">${escapeHtml(d.id)}</div>
+        ${sectionObj ? `<a class="gi-link" href="#${d.section}">Read in "${escapeHtml(sectionTitle)}" →</a>` : ''}
+      `;
+    }
+    card.hidden = false;
+  }
+  function hideGraphInfo() {
+    const card = document.getElementById('graph-infocard');
+    if (card) card.hidden = true;
+  }
+
   // -------- render a single section as its own page --------
   function renderSectionPage(s) {
     const numHtml = s.number ? `<span class="num">${escapeHtml(s.number)}</span>` : '';
@@ -399,7 +646,11 @@
   // -------- TOC --------
   function buildTOC(sections) {
     const home = `<a class="toc-link toc-home" data-target="" data-text="overview home" href="#">Overview</a>`;
-    els.toc.innerHTML = home + sections.map(s => {
+    const graphLink = `<a class="toc-link toc-graph" data-target="graph" data-text="ontology graph explorer class diagram" href="#graph">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><circle cx="12" cy="12" r="2.5"/><line x1="8" y1="7" x2="10" y2="10.5"/><line x1="16" y1="7" x2="14" y2="10.5"/><line x1="8" y1="17" x2="10" y2="13.5"/><line x1="16" y1="17" x2="14" y2="13.5"/></svg>
+      Ontology Graph
+    </a>`;
+    els.toc.innerHTML = home + graphLink + sections.map(s => {
       const plainTitle = stripTags(s.title);
       return `<a class="toc-link level-${s.level}" data-target="${s.id}" data-text="${escapeHtml(((s.number || '') + ' ' + plainTitle).toLowerCase())}" href="#${s.id}">${s.number ? `<span class="num">${escapeHtml(s.number)}</span>` : ''}${plainTitle}</a>`;
     }).join('');
@@ -458,6 +709,12 @@
       document.title = 'Guidelines for the Creation of Semantic Models in the IoP';
       els.pageOutline.innerHTML = '';
       els.main.classList.remove('has-outline');
+    } else if (id === 'graph') {
+      els.content.innerHTML = renderGraphPage();
+      document.title = 'Ontology Graph Explorer · Semantic Models in the IoP';
+      els.pageOutline.innerHTML = '';
+      els.main.classList.remove('has-outline');
+      initOntologyGraph();
     } else {
       const s = SECTIONS.find(x => x.id === id);
       if (!s) { renderSectionDOM(null); return; }
@@ -491,6 +748,7 @@
 
   function navigateToHash(hash) {
     if (!hash) { showSection(null); return; }
+    if (hash === 'graph') { showSection('graph'); return; }
     const target = SECTIONS.find(s => s.id === hash);
     if (target) { showSection(hash); return; }
     const owner = ANCHOR_MAP[hash];
@@ -509,6 +767,10 @@
         <span><strong>Source</strong> 43-page PDF, converted for the web</span>
       </div>
       <a class="start-reading" href="#sec-1">Start reading — 1. Introduction <span aria-hidden="true">→</span></a>
+      <a class="graph-cta" href="#graph">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><circle cx="12" cy="12" r="2.5"/><line x1="8" y1="7" x2="10" y2="10.5"/><line x1="16" y1="7" x2="14" y2="10.5"/><line x1="8" y1="17" x2="10" y2="13.5"/><line x1="16" y1="17" x2="14" y2="13.5"/></svg>
+        Explore the ontology as an interactive graph
+      </a>
       <p class="doc-cards-label">Or jump straight to a topic</p>
       <div class="doc-cards">
         <button class="doc-card" data-goto="sec-2">
@@ -789,12 +1051,17 @@
     els.cmdkOverlay.classList.remove('show');
   }
 
+  const GRAPH_PSEUDO_SECTION = { id: 'graph', number: null, title: 'Ontology Graph Explorer', level: 1 };
+  const GRAPH_HAYSTACK = 'ontology graph explorer interactive class diagram relations subclassof visualize';
+
   function cmdkMatches(query) {
     const q = query.trim().toLowerCase();
     if (!q) {
-      return SECTIONS.slice(0, 8);
+      return [GRAPH_PSEUDO_SECTION, ...SECTIONS.slice(0, 7)];
     }
-    return searchIndex.filter(s => s.haystack.includes(q)).map(s => SECTIONS.find(x => x.id === s.id)).filter(Boolean).slice(0, 20);
+    const results = searchIndex.filter(s => s.haystack.includes(q)).map(s => SECTIONS.find(x => x.id === s.id)).filter(Boolean);
+    if (GRAPH_HAYSTACK.includes(q)) results.unshift(GRAPH_PSEUDO_SECTION);
+    return results.slice(0, 20);
   }
 
   function renderCmdkResults(query) {
