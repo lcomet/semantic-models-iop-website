@@ -468,8 +468,7 @@
     if (zoomOutBtn) zoomOutBtn.onclick = () => svg.transition().call(zoomBehavior.scaleBy, 0.75);
     if (resetBtn) resetBtn.onclick = () => {
       hideGraphInfo();
-      clearHighlight(nodeGroup, linkGroup);
-      fitToView(nodes, width, height, svg, zoomBehavior, d3sel, true);
+      buildForceGraph(data);
     };
   }
 
@@ -643,11 +642,9 @@
     if (zoomOutBtn) zoomOutBtn.onclick = () => svg.transition().call(zoomBehavior.scaleBy, 0.75);
     if (resetBtn) resetBtn.onclick = () => {
       hideGraphInfo();
-      nodeGroup.classed('dim', false);
-      linkSel.classed('dim', false);
       const filterInput = document.getElementById('graph-filter');
       if (filterInput) filterInput.value = '';
-      svg.transition().call(zoomBehavior.transform, d3sel.zoomIdentity);
+      buildLandscapeGraph(data);
     };
 
     landscapeRefs = { nodeGroup, linkSel };
