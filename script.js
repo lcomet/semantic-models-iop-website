@@ -254,14 +254,19 @@
     return `<article class="page graph-page">
       <p class="breadcrumb">Interactive</p>
       <h1 class="page-title">Ontology Graph Explorer</h1>
-      <p class="graph-intro">The classes and relations from the guideline's running example (sections 2.3–2.4), as an interactive graph. Drag nodes, scroll or pinch to zoom, and click any node to see how it connects — with a link straight to where it's explained in the text.</p>
+      <p class="graph-intro" id="graph-intro-text">The classes and relations from the guideline's running example (sections 2.3–2.4), as an interactive graph. Drag nodes, scroll or pinch to zoom, and click any node to see how it connects — with a link straight to where it's explained in the text.</p>
+      <div class="graph-tabs">
+        <button class="graph-tab active" data-view="classes">Chapter 2 example</button>
+        <button class="graph-tab" data-view="landscape">Domain ontologies landscape (Appendix)</button>
+      </div>
       <div class="graph-toolbar">
-        <div class="graph-legend">
+        <div class="graph-legend" id="graph-legend">
           <span class="legend-item"><span class="legend-dot"></span>Class</span>
           <span class="legend-item"><span class="legend-line hierarchy-line"></span>subClassOf</span>
           <span class="legend-item"><span class="legend-line property-line"></span>object property</span>
         </div>
         <div class="graph-controls">
+          <input id="graph-filter" class="graph-filter-input" type="text" placeholder="Filter by name…" hidden>
           <button id="graph-zoom-out" class="icon-btn" aria-label="Zoom out">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
           </button>
@@ -279,19 +284,58 @@
     </article>`;
   }
 
-  let graphDataCache = null;
+  const GRAPH_INTRO_TEXT = {
+    classes: "The classes and relations from the guideline's running example (sections 2.3–2.4), as an interactive graph. Drag nodes, scroll or pinch to zoom, and click any node to see how it connects — with a link straight to where it's explained in the text.",
+    landscape: "The 42 domain ontologies from Appendix A.2, connected to the 15 manufacturing domains they cover. Click a domain to see which ontologies address it, click an ontology to see what it covers, or filter by name — then jump to the full comparison table.",
+  };
+  const GRAPH_LEGEND_HTML = {
+    classes: `<span class="legend-item"><span class="legend-dot"></span>Class</span>
+      <span class="legend-item"><span class="legend-line hierarchy-line"></span>subClassOf</span>
+      <span class="legend-item"><span class="legend-line property-line"></span>object property</span>`,
+    landscape: `<span class="legend-item"><span class="legend-dot domain-dot"></span>Domain</span>
+      <span class="legend-item"><span class="legend-dot"></span>Ontology / Semantic Model</span>
+      <span class="legend-item"><span class="legend-line property-line"></span>covers</span>`,
+  };
+
+  let currentGraphView = 'classes';
+
+  function switchGraphView(view) {
+    currentGraphView = view;
+    document.querySelectorAll('.graph-tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+    document.getElementById('graph-intro-text').textContent = GRAPH_INTRO_TEXT[view];
+    document.getElementById('graph-legend').innerHTML = GRAPH_LEGEND_HTML[view];
+    const filterInput = document.getElementById('graph-filter');
+    filterInput.hidden = view !== 'landscape';
+    filterInput.value = '';
+    loadAndBuildGraph(view);
+  }
+
+  let graphDataCache = {};
 
   async function initOntologyGraph() {
+    currentGraphView = 'classes';
+    document.querySelectorAll('.graph-tab').forEach(t => {
+      t.addEventListener('click', () => switchGraphView(t.dataset.view));
+    });
+    const filterInput = document.getElementById('graph-filter');
+    filterInput.addEventListener('input', (e) => filterLandscapeNodes(e.target.value));
+    await loadAndBuildGraph('classes');
+  }
+
+  async function loadAndBuildGraph(view) {
     const loadingEl = document.getElementById('graph-loading');
+    const file = view === 'landscape' ? 'ontology-landscape.json' : 'ontology-graph.json';
+    if (loadingEl) { loadingEl.style.display = 'block'; loadingEl.textContent = 'Loading graph…'; }
     try {
       await loadD3();
-      if (!graphDataCache) {
-        const res = await fetch('ontology-graph.json');
-        graphDataCache = await res.json();
+      if (!graphDataCache[view]) {
+        const res = await fetch(file);
+        graphDataCache[view] = await res.json();
       }
       if (!document.getElementById('graph-svg')) return; // navigated away already
       if (loadingEl) loadingEl.style.display = 'none';
-      buildForceGraph(graphDataCache);
+      if (view === 'landscape') buildLandscapeGraph(graphDataCache[view]);
+      else buildForceGraph(graphDataCache[view]);
       window.addEventListener('resize', onGraphResize);
     } catch (err) {
       if (loadingEl) loadingEl.textContent = 'Could not load the graph — try refreshing the page.';
@@ -302,8 +346,12 @@
   function onGraphResize() {
     clearTimeout(graphResizeTimer);
     graphResizeTimer = setTimeout(() => {
-      if (document.getElementById('graph-svg') && graphDataCache) buildForceGraph(graphDataCache);
-      else window.removeEventListener('resize', onGraphResize);
+      if (document.getElementById('graph-svg') && graphDataCache[currentGraphView]) {
+        if (currentGraphView === 'landscape') buildLandscapeGraph(graphDataCache.landscape);
+        else buildForceGraph(graphDataCache.classes);
+      } else {
+        window.removeEventListener('resize', onGraphResize);
+      }
     }, 250);
   }
 
@@ -480,6 +528,168 @@
   function hideGraphInfo() {
     const card = document.getElementById('graph-infocard');
     if (card) card.hidden = true;
+  }
+
+  // -------- landscape graph (Appendix A.2 domain-ontology bipartite view) --------
+  let landscapeRefs = null;
+
+  function buildLandscapeGraph(data) {
+    const svgEl = document.getElementById('graph-svg');
+    const wrap = document.getElementById('graph-canvas-wrap');
+    if (!svgEl || !wrap) return;
+    const d3sel = window.d3;
+    const width = wrap.clientWidth;
+    const height = wrap.clientHeight || 560;
+    const cx = width / 2, cy = height / 2;
+
+    const svg = d3sel.select(svgEl).attr('viewBox', [0, 0, width, height]).attr('width', width).attr('height', height);
+    svg.selectAll('*').remove();
+
+    const zoomLayer = svg.append('g').attr('class', 'zoom-layer');
+
+    const domainNodes = data.nodes.filter(n => n.type === 'domain').map(d => Object.assign({}, d));
+    const ontologyNodesRaw = data.nodes.filter(n => n.type === 'ontology').map(d => Object.assign({}, d));
+
+    const domainIndex = {};
+    domainNodes.forEach((d, i) => { domainIndex[d.id] = i; });
+
+    const primaryDomain = {};
+    data.edges.forEach(e => {
+      if (!(e.source in primaryDomain)) primaryDomain[e.source] = e.target;
+    });
+
+    const ontologyNodes = ontologyNodesRaw.slice().sort((a, b) => {
+      const da = domainIndex[primaryDomain[a.id]] ?? 999;
+      const db = domainIndex[primaryDomain[b.id]] ?? 999;
+      if (da !== db) return da - db;
+      return a.id.localeCompare(b.id);
+    });
+
+    const innerR = Math.min(width, height) * 0.19;
+    const outerR = Math.min(width, height) * 0.44;
+
+    domainNodes.forEach((d, i) => {
+      const angle = (i / domainNodes.length) * 2 * Math.PI - Math.PI / 2;
+      d.x = cx + innerR * Math.cos(angle);
+      d.y = cy + innerR * Math.sin(angle);
+    });
+    ontologyNodes.forEach((d, i) => {
+      const angle = (i / ontologyNodes.length) * 2 * Math.PI - Math.PI / 2;
+      d.x = cx + outerR * Math.cos(angle);
+      d.y = cy + outerR * Math.sin(angle);
+    });
+
+    const allNodes = [...domainNodes, ...ontologyNodes];
+    const nodeById = {};
+    allNodes.forEach(n => { nodeById[n.id] = n; });
+
+    const links = data.edges.map(e => ({ source: nodeById[e.source], target: nodeById[e.target] })).filter(l => l.source && l.target);
+
+    function arcPath(d) {
+      return `M${d.source.x},${d.source.y} Q${cx},${cy} ${d.target.x},${d.target.y}`;
+    }
+
+    const linkSel = zoomLayer.append('g').attr('class', 'links')
+      .selectAll('path').data(links).join('path')
+      .attr('class', 'landscape-link')
+      .attr('d', arcPath)
+      .attr('fill', 'none');
+
+    const nodeGroup = zoomLayer.append('g').attr('class', 'nodes')
+      .selectAll('g').data(allNodes).join('g')
+      .attr('class', d => 'node-group ' + (d.type === 'domain' ? 'domain-node' : 'ontology-node'))
+      .attr('transform', d => `translate(${d.x},${d.y})`)
+      .call(landscapeDrag(linkSel));
+
+    nodeGroup.append('circle')
+      .attr('r', d => d.type === 'domain' ? 22 : 11)
+      .attr('class', d => 'node-circle ' + (d.type === 'domain' ? 'domain-circle' : 'ontology-circle'));
+
+    nodeGroup.append('text')
+      .attr('class', d => 'node-label ' + (d.type === 'domain' ? '' : 'small-label'))
+      .attr('text-anchor', 'middle')
+      .attr('dy', d => d.type === 'domain' ? '0.32em' : '-16px')
+      .text(d => d.type === 'domain' ? d.id : (d.id.length > 13 ? d.id.slice(0, 12) + '…' : d.id));
+
+    nodeGroup.style('cursor', 'pointer').on('click', (event, d) => {
+      event.stopPropagation();
+      showLandscapeInfo(d, nodeGroup, linkSel);
+    });
+
+    svg.on('click', () => { hideGraphInfo(); nodeGroup.classed('dim', false); linkSel.classed('dim', false); });
+
+    function landscapeDrag() {
+      function dragged(event, d) {
+        d.x = event.x; d.y = event.y;
+        d3sel.select(this).attr('transform', `translate(${d.x},${d.y})`);
+        linkSel.attr('d', l => (l.source === d || l.target === d) ? arcPath(l) : l._d || arcPath(l));
+      }
+      return d3sel.drag().on('drag', dragged);
+    }
+
+    const zoomBehavior = d3sel.zoom().scaleExtent([0.4, 3]).on('zoom', (event) => {
+      zoomLayer.attr('transform', event.transform);
+    });
+    svg.call(zoomBehavior).on('dblclick.zoom', null);
+
+    const zoomInBtn = document.getElementById('graph-zoom-in');
+    const zoomOutBtn = document.getElementById('graph-zoom-out');
+    const resetBtn = document.getElementById('graph-reset');
+    if (zoomInBtn) zoomInBtn.onclick = () => svg.transition().call(zoomBehavior.scaleBy, 1.3);
+    if (zoomOutBtn) zoomOutBtn.onclick = () => svg.transition().call(zoomBehavior.scaleBy, 0.75);
+    if (resetBtn) resetBtn.onclick = () => svg.transition().call(zoomBehavior.transform, d3sel.zoomIdentity);
+
+    landscapeRefs = { nodeGroup, linkSel };
+  }
+
+  function showLandscapeInfo(d, nodeGroup, linkSel) {
+    const card = document.getElementById('graph-infocard');
+    if (!card) return;
+    const connected = new Set([d.id]);
+    linkSel.each(function (l) {
+      if (l.source.id === d.id) connected.add(l.target.id);
+      if (l.target.id === d.id) connected.add(l.source.id);
+    });
+    nodeGroup.classed('dim', n => !connected.has(n.id));
+    linkSel.classed('dim', l => l.source.id !== d.id && l.target.id !== d.id);
+
+    if (d.type === 'domain') {
+      const count = connected.size - 1;
+      card.innerHTML = `
+        <div class="gi-type">Domain</div>
+        <div class="gi-name">${escapeHtml(d.label)} <span class="gi-abbr">(${escapeHtml(d.id)})</span></div>
+        <div class="gi-detail">${count} ontolog${count === 1 ? 'y' : 'ies'} cover this domain</div>
+        <a class="gi-link" href="#sec-A-2">See the full comparison table →</a>
+      `;
+    } else {
+      const refs = (d.ref || '').replace(/[\[\]]/g, '').split(',').map(s => s.trim()).filter(Boolean);
+      const refLinksHtml = refs.length ? `<a class="gi-link" href="#ref-domtab-${refs[0]}">Reference ${refs.map(r => '[' + r + ']').join(' ')} →</a>` : '';
+      card.innerHTML = `
+        <div class="gi-type">${d.classif === 'SM' ? 'Semantic Model' : 'Ontology'}</div>
+        <div class="gi-name">${escapeHtml(d.id)}</div>
+        <a class="gi-link" href="#sec-A-2">See in the comparison table →</a>
+        ${refLinksHtml}
+      `;
+    }
+    card.hidden = false;
+  }
+
+  function filterLandscapeNodes(query) {
+    if (!landscapeRefs) return;
+    const { nodeGroup, linkSel } = landscapeRefs;
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      nodeGroup.classed('dim', false);
+      linkSel.classed('dim', false);
+      hideGraphInfo();
+      return;
+    }
+    hideGraphInfo();
+    nodeGroup.classed('dim', d => d.type === 'ontology' && !d.id.toLowerCase().includes(q));
+    linkSel.classed('dim', l => {
+      const oNode = l.source.type === 'ontology' ? l.source : l.target;
+      return !oNode.id.toLowerCase().includes(q);
+    });
   }
 
   // -------- render a single section as its own page --------

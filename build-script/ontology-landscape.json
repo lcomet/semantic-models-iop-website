@@ -1,0 +1,1001 @@
+{
+ "nodes": [
+  {
+   "id": "MFG",
+   "label": "Manufacturing",
+   "type": "domain"
+  },
+  {
+   "id": "PROD",
+   "label": "Products",
+   "type": "domain"
+  },
+  {
+   "id": "PROC",
+   "label": "Processes",
+   "type": "domain"
+  },
+  {
+   "id": "RES",
+   "label": "Resources",
+   "type": "domain"
+  },
+  {
+   "id": "P.COMP",
+   "label": "Plant Components",
+   "type": "domain"
+  },
+  {
+   "id": "ACTV",
+   "label": "Activities",
+   "type": "domain"
+  },
+  {
+   "id": "SHED",
+   "label": "Scheduling",
+   "type": "domain"
+  },
+  {
+   "id": "MAINT",
+   "label": "Maintenance",
+   "type": "domain"
+  },
+  {
+   "id": "SENS",
+   "label": "Sensors",
+   "type": "domain"
+  },
+  {
+   "id": "ROBT",
+   "label": "Robotics",
+   "type": "domain"
+  },
+  {
+   "id": "ENG",
+   "label": "Engineering",
+   "type": "domain"
+  },
+  {
+   "id": "BATCH",
+   "label": "Batch Processing",
+   "type": "domain"
+  },
+  {
+   "id": "MSMT",
+   "label": "Measurements",
+   "type": "domain"
+  },
+  {
+   "id": "STD",
+   "label": "Standards",
+   "type": "domain"
+  },
+  {
+   "id": "SIM",
+   "label": "Simulation",
+   "type": "domain"
+  },
+  {
+   "id": "SOIL",
+   "type": "ontology",
+   "classif": "SM",
+   "ref": "[1]"
+  },
+  {
+   "id": "SemAnz4.0",
+   "type": "ontology",
+   "classif": "SM",
+   "ref": "[2]"
+  },
+  {
+   "id": "iFAB",
+   "type": "ontology",
+   "classif": "SM",
+   "ref": "[2]"
+  },
+  {
+   "id": "ADACOR",
+   "type": "ontology",
+   "classif": "SM",
+   "ref": "[2]"
+  },
+  {
+   "id": "MASON",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[3,4]"
+  },
+  {
+   "id": "MaSDeM",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[2]"
+  },
+  {
+   "id": "SIMPM",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[5]"
+  },
+  {
+   "id": "PSL",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[3]"
+  },
+  {
+   "id": "OntoCAPE",
+   "type": "ontology",
+   "classif": "SM",
+   "ref": "[2]"
+  },
+  {
+   "id": "BaPrOn",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[6]"
+  },
+  {
+   "id": "FABMAS",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[7]"
+  },
+  {
+   "id": "PrOnto",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[2,8]"
+  },
+  {
+   "id": "ARUM",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[9]"
+  },
+  {
+   "id": "RGOM",
+   "type": "ontology",
+   "classif": "SM",
+   "ref": "[8]"
+  },
+  {
+   "id": "ONTO-PDM",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[10]"
+  },
+  {
+   "id": "MPMO",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[11]"
+  },
+  {
+   "id": "MCCO",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[2]"
+  },
+  {
+   "id": "SCRO",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[12]"
+  },
+  {
+   "id": "MSDL",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[2]"
+  },
+  {
+   "id": "AMU",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[13]"
+  },
+  {
+   "id": "MTM",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[14]"
+  },
+  {
+   "id": "MPO",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[15]"
+  },
+  {
+   "id": "IMAMO",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[13]"
+  },
+  {
+   "id": "IEO",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[2]"
+  },
+  {
+   "id": "COMPOSITION",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[16]"
+  },
+  {
+   "id": "MaRCO",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[17]"
+  },
+  {
+   "id": "ExtruOnt",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[17]"
+  },
+  {
+   "id": "OntoProg",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[18]"
+  },
+  {
+   "id": "Onto-ICMS",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[19]"
+  },
+  {
+   "id": "AMLO",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[20]"
+  },
+  {
+   "id": "WSSN",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[21]"
+  },
+  {
+   "id": "M3",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[22]"
+  },
+  {
+   "id": "CSIRO-SO",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[23]"
+  },
+  {
+   "id": "OPW",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[24]"
+  },
+  {
+   "id": "CDM-Core",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[25,13]"
+  },
+  {
+   "id": "ROMAIN",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[26,13]"
+  },
+  {
+   "id": "STO",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[27]"
+  },
+  {
+   "id": "SSN",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[28]"
+  },
+  {
+   "id": "newSSN",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[28]"
+  },
+  {
+   "id": "AWARE",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[28]"
+  },
+  {
+   "id": "OntologySim",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[29]"
+  },
+  {
+   "id": "CMSD",
+   "type": "ontology",
+   "classif": "O",
+   "ref": "[30]"
+  }
+ ],
+ "edges": [
+  {
+   "source": "SOIL",
+   "target": "MFG"
+  },
+  {
+   "source": "SOIL",
+   "target": "PROD"
+  },
+  {
+   "source": "SOIL",
+   "target": "PROC"
+  },
+  {
+   "source": "SOIL",
+   "target": "RES"
+  },
+  {
+   "source": "SOIL",
+   "target": "MSMT"
+  },
+  {
+   "source": "SemAnz4.0",
+   "target": "MFG"
+  },
+  {
+   "source": "SemAnz4.0",
+   "target": "PROD"
+  },
+  {
+   "source": "SemAnz4.0",
+   "target": "PROC"
+  },
+  {
+   "source": "iFAB",
+   "target": "MFG"
+  },
+  {
+   "source": "ADACOR",
+   "target": "MFG"
+  },
+  {
+   "source": "ADACOR",
+   "target": "PROC"
+  },
+  {
+   "source": "ADACOR",
+   "target": "P.COMP"
+  },
+  {
+   "source": "ADACOR",
+   "target": "SHED"
+  },
+  {
+   "source": "MASON",
+   "target": "MFG"
+  },
+  {
+   "source": "MASON",
+   "target": "PROD"
+  },
+  {
+   "source": "MASON",
+   "target": "PROC"
+  },
+  {
+   "source": "MASON",
+   "target": "RES"
+  },
+  {
+   "source": "MaSDeM",
+   "target": "MFG"
+  },
+  {
+   "source": "MaSDeM",
+   "target": "PROD"
+  },
+  {
+   "source": "MaSDeM",
+   "target": "PROC"
+  },
+  {
+   "source": "MaSDeM",
+   "target": "RES"
+  },
+  {
+   "source": "MaSDeM",
+   "target": "ENG"
+  },
+  {
+   "source": "SIMPM",
+   "target": "MFG"
+  },
+  {
+   "source": "SIMPM",
+   "target": "PROC"
+  },
+  {
+   "source": "PSL",
+   "target": "MFG"
+  },
+  {
+   "source": "PSL",
+   "target": "PROC"
+  },
+  {
+   "source": "PSL",
+   "target": "ACTV"
+  },
+  {
+   "source": "PSL",
+   "target": "SHED"
+  },
+  {
+   "source": "PSL",
+   "target": "SIM"
+  },
+  {
+   "source": "OntoCAPE",
+   "target": "PROC"
+  },
+  {
+   "source": "OntoCAPE",
+   "target": "ENG"
+  },
+  {
+   "source": "BaPrOn",
+   "target": "PROC"
+  },
+  {
+   "source": "BaPrOn",
+   "target": "SHED"
+  },
+  {
+   "source": "BaPrOn",
+   "target": "BATCH"
+  },
+  {
+   "source": "FABMAS",
+   "target": "MFG"
+  },
+  {
+   "source": "FABMAS",
+   "target": "PROD"
+  },
+  {
+   "source": "FABMAS",
+   "target": "RES"
+  },
+  {
+   "source": "FABMAS",
+   "target": "ACTV"
+  },
+  {
+   "source": "FABMAS",
+   "target": "SHED"
+  },
+  {
+   "source": "PrOnto",
+   "target": "MFG"
+  },
+  {
+   "source": "PrOnto",
+   "target": "PROD"
+  },
+  {
+   "source": "PrOnto",
+   "target": "PROC"
+  },
+  {
+   "source": "PrOnto",
+   "target": "P.COMP"
+  },
+  {
+   "source": "ARUM",
+   "target": "MFG"
+  },
+  {
+   "source": "ARUM",
+   "target": "PROD"
+  },
+  {
+   "source": "ARUM",
+   "target": "PROC"
+  },
+  {
+   "source": "ARUM",
+   "target": "RES"
+  },
+  {
+   "source": "ARUM",
+   "target": "SHED"
+  },
+  {
+   "source": "RGOM",
+   "target": "MFG"
+  },
+  {
+   "source": "RGOM",
+   "target": "PROD"
+  },
+  {
+   "source": "RGOM",
+   "target": "PROC"
+  },
+  {
+   "source": "RGOM",
+   "target": "RES"
+  },
+  {
+   "source": "RGOM",
+   "target": "SHED"
+  },
+  {
+   "source": "RGOM",
+   "target": "MAINT"
+  },
+  {
+   "source": "RGOM",
+   "target": "STD"
+  },
+  {
+   "source": "ONTO-PDM",
+   "target": "MFG"
+  },
+  {
+   "source": "ONTO-PDM",
+   "target": "PROD"
+  },
+  {
+   "source": "ONTO-PDM",
+   "target": "PROC"
+  },
+  {
+   "source": "ONTO-PDM",
+   "target": "RES"
+  },
+  {
+   "source": "ONTO-PDM",
+   "target": "SHED"
+  },
+  {
+   "source": "ONTO-PDM",
+   "target": "STD"
+  },
+  {
+   "source": "MPMO",
+   "target": "MFG"
+  },
+  {
+   "source": "MPMO",
+   "target": "PROC"
+  },
+  {
+   "source": "MPMO",
+   "target": "RES"
+  },
+  {
+   "source": "MPMO",
+   "target": "ROBT"
+  },
+  {
+   "source": "MCCO",
+   "target": "MFG"
+  },
+  {
+   "source": "MCCO",
+   "target": "PROD"
+  },
+  {
+   "source": "SCRO",
+   "target": "MFG"
+  },
+  {
+   "source": "SCRO",
+   "target": "PROC"
+  },
+  {
+   "source": "SCRO",
+   "target": "RES"
+  },
+  {
+   "source": "SCRO",
+   "target": "P.COMP"
+  },
+  {
+   "source": "SCRO",
+   "target": "ACTV"
+  },
+  {
+   "source": "MSDL",
+   "target": "MFG"
+  },
+  {
+   "source": "MSDL",
+   "target": "PROD"
+  },
+  {
+   "source": "MSDL",
+   "target": "PROC"
+  },
+  {
+   "source": "MSDL",
+   "target": "RES"
+  },
+  {
+   "source": "AMU",
+   "target": "MFG"
+  },
+  {
+   "source": "AMU",
+   "target": "PROD"
+  },
+  {
+   "source": "AMU",
+   "target": "PROC"
+  },
+  {
+   "source": "AMU",
+   "target": "RES"
+  },
+  {
+   "source": "AMU",
+   "target": "P.COMP"
+  },
+  {
+   "source": "MTM",
+   "target": "MFG"
+  },
+  {
+   "source": "MTM",
+   "target": "RES"
+  },
+  {
+   "source": "MPO",
+   "target": "MFG"
+  },
+  {
+   "source": "MPO",
+   "target": "PROC"
+  },
+  {
+   "source": "MPO",
+   "target": "RES"
+  },
+  {
+   "source": "MPO",
+   "target": "ENG"
+  },
+  {
+   "source": "IMAMO",
+   "target": "MFG"
+  },
+  {
+   "source": "IMAMO",
+   "target": "RES"
+  },
+  {
+   "source": "IMAMO",
+   "target": "P.COMP"
+  },
+  {
+   "source": "IMAMO",
+   "target": "MAINT"
+  },
+  {
+   "source": "IMAMO",
+   "target": "SENS"
+  },
+  {
+   "source": "IEO",
+   "target": "MFG"
+  },
+  {
+   "source": "IEO",
+   "target": "PROD"
+  },
+  {
+   "source": "IEO",
+   "target": "PROC"
+  },
+  {
+   "source": "IEO",
+   "target": "RES"
+  },
+  {
+   "source": "IEO",
+   "target": "P.COMP"
+  },
+  {
+   "source": "IEO",
+   "target": "BATCH"
+  },
+  {
+   "source": "COMPOSITION",
+   "target": "MFG"
+  },
+  {
+   "source": "COMPOSITION",
+   "target": "PROD"
+  },
+  {
+   "source": "COMPOSITION",
+   "target": "PROC"
+  },
+  {
+   "source": "COMPOSITION",
+   "target": "RES"
+  },
+  {
+   "source": "MaRCO",
+   "target": "MFG"
+  },
+  {
+   "source": "MaRCO",
+   "target": "RES"
+  },
+  {
+   "source": "ExtruOnt",
+   "target": "MFG"
+  },
+  {
+   "source": "ExtruOnt",
+   "target": "PROC"
+  },
+  {
+   "source": "ExtruOnt",
+   "target": "RES"
+  },
+  {
+   "source": "ExtruOnt",
+   "target": "SENS"
+  },
+  {
+   "source": "OntoProg",
+   "target": "MFG"
+  },
+  {
+   "source": "OntoProg",
+   "target": "RES"
+  },
+  {
+   "source": "OntoProg",
+   "target": "MAINT"
+  },
+  {
+   "source": "Onto-ICMS",
+   "target": "MFG"
+  },
+  {
+   "source": "Onto-ICMS",
+   "target": "PROC"
+  },
+  {
+   "source": "Onto-ICMS",
+   "target": "RES"
+  },
+  {
+   "source": "Onto-ICMS",
+   "target": "P.COMP"
+  },
+  {
+   "source": "Onto-ICMS",
+   "target": "ACTV"
+  },
+  {
+   "source": "Onto-ICMS",
+   "target": "MAINT"
+  },
+  {
+   "source": "AMLO",
+   "target": "MFG"
+  },
+  {
+   "source": "AMLO",
+   "target": "PROD"
+  },
+  {
+   "source": "AMLO",
+   "target": "PROC"
+  },
+  {
+   "source": "AMLO",
+   "target": "RES"
+  },
+  {
+   "source": "AMLO",
+   "target": "P.COMP"
+  },
+  {
+   "source": "AMLO",
+   "target": "SENS"
+  },
+  {
+   "source": "AMLO",
+   "target": "ENG"
+  },
+  {
+   "source": "AMLO",
+   "target": "STD"
+  },
+  {
+   "source": "WSSN",
+   "target": "MAINT"
+  },
+  {
+   "source": "M3",
+   "target": "SENS"
+  },
+  {
+   "source": "M3",
+   "target": "ROBT"
+  },
+  {
+   "source": "M3",
+   "target": "MSMT"
+  },
+  {
+   "source": "M3",
+   "target": "STD"
+  },
+  {
+   "source": "CSIRO-SO",
+   "target": "PROC"
+  },
+  {
+   "source": "CSIRO-SO",
+   "target": "SENS"
+  },
+  {
+   "source": "CSIRO-SO",
+   "target": "MSMT"
+  },
+  {
+   "source": "OPW",
+   "target": "MFG"
+  },
+  {
+   "source": "OPW",
+   "target": "PROD"
+  },
+  {
+   "source": "OPW",
+   "target": "PROC"
+  },
+  {
+   "source": "OPW",
+   "target": "RES"
+  },
+  {
+   "source": "OPW",
+   "target": "ACTV"
+  },
+  {
+   "source": "CDM-Core",
+   "target": "MFG"
+  },
+  {
+   "source": "CDM-Core",
+   "target": "PROC"
+  },
+  {
+   "source": "CDM-Core",
+   "target": "SHED"
+  },
+  {
+   "source": "CDM-Core",
+   "target": "ROBT"
+  },
+  {
+   "source": "CDM-Core",
+   "target": "MSMT"
+  },
+  {
+   "source": "CDM-Core",
+   "target": "STD"
+  },
+  {
+   "source": "ROMAIN",
+   "target": "PROC"
+  },
+  {
+   "source": "ROMAIN",
+   "target": "RES"
+  },
+  {
+   "source": "ROMAIN",
+   "target": "MAINT"
+  },
+  {
+   "source": "STO",
+   "target": "MFG"
+  },
+  {
+   "source": "STO",
+   "target": "STD"
+  },
+  {
+   "source": "SSN",
+   "target": "RES"
+  },
+  {
+   "source": "SSN",
+   "target": "SENS"
+  },
+  {
+   "source": "newSSN",
+   "target": "RES"
+  },
+  {
+   "source": "newSSN",
+   "target": "SENS"
+  },
+  {
+   "source": "AWARE",
+   "target": "RES"
+  },
+  {
+   "source": "AWARE",
+   "target": "SENS"
+  },
+  {
+   "source": "AWARE",
+   "target": "ROBT"
+  },
+  {
+   "source": "OntologySim",
+   "target": "MFG"
+  },
+  {
+   "source": "OntologySim",
+   "target": "PROD"
+  },
+  {
+   "source": "OntologySim",
+   "target": "PROC"
+  },
+  {
+   "source": "OntologySim",
+   "target": "RES"
+  },
+  {
+   "source": "OntologySim",
+   "target": "ACTV"
+  },
+  {
+   "source": "OntologySim",
+   "target": "SIM"
+  },
+  {
+   "source": "CMSD",
+   "target": "MFG"
+  },
+  {
+   "source": "CMSD",
+   "target": "PROD"
+  },
+  {
+   "source": "CMSD",
+   "target": "PROC"
+  },
+  {
+   "source": "CMSD",
+   "target": "RES"
+  },
+  {
+   "source": "CMSD",
+   "target": "SIM"
+  }
+ ]
+}
