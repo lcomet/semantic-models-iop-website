@@ -25,6 +25,12 @@
     main: document.getElementById('main'),
     displaySettingsBtn: document.getElementById('display-settings-btn'),
     displaySettingsPanel: document.getElementById('display-settings-panel'),
+    askFab: document.getElementById('ask-fab'),
+    askPanel: document.getElementById('ask-panel'),
+    askClose: document.getElementById('ask-close'),
+    askMessages: document.getElementById('ask-messages'),
+    askForm: document.getElementById('ask-form'),
+    askInput: document.getElementById('ask-input'),
   };
 
   let SECTIONS = [];
@@ -1097,10 +1103,35 @@
   }
   function buildSearchIndex() {
     searchIndex = SECTIONS.map(s => {
-      const text = s.blocks.map(blockText).join(' ');
+      const text = s.blocks.map(blockText).join(' ').replace(/\s+/g, ' ').trim();
       const plainTitle = stripTags(s.title);
-      return { id: s.id, number: s.number, title: plainTitle, haystack: ((s.number || '') + ' ' + plainTitle + ' ' + text).toLowerCase() };
+      return {
+        id: s.id, number: s.number, title: plainTitle,
+        rawText: text,
+        haystack: ((s.number || '') + ' ' + plainTitle + ' ' + text).toLowerCase(),
+      };
     });
+  }
+
+  // -------- snippet extraction (Algolia-style highlighted excerpt) --------
+  function escapeRegExp(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function getSnippet(rawText, query, radius) {
+    radius = radius || 70;
+    if (!rawText || !query) return '';
+    const lower = rawText.toLowerCase();
+    const idx = lower.indexOf(query.toLowerCase());
+    if (idx === -1) return '';
+    const start = Math.max(0, idx - radius);
+    const end = Math.min(rawText.length, idx + query.length + radius);
+    let snippet = rawText.slice(start, end).trim();
+    if (start > 0) snippet = '…' + snippet;
+    if (end < rawText.length) snippet = snippet + '…';
+    const escaped = escapeHtml(snippet);
+    const re = new RegExp('(' + escapeRegExp(escapeHtml(query)) + ')', 'ig');
+    return escaped.replace(re, '<mark>$1</mark>');
   }
 
   function runSearch(q) {
@@ -1149,6 +1180,7 @@
       els.lightbox.classList.remove('show');
       closeSidebar();
       closeCmdk();
+      closeAsk();
     }
   });
 
@@ -1214,6 +1246,116 @@
     applyDisplaySetting('width', localStorage.getItem('iop-width') || 'normal');
     applyDisplaySetting('text', localStorage.getItem('iop-text') || 'normal');
   })();
+
+  // -------- ask this guide (extractive Q&A, no LLM) --------
+  const ASK_STOPWORDS = new Set(['what','whats',"what's",'is','are','the','a','an','of','in','on','how','do','does','i','to','for','and','or',
+    'which','when','where','why','can','could','should','would','it','its',"it's",'this','that','these','those','be','been','being',
+    'with','as','by','from','have','has','had','you','your','we','our','me','my','about','tell','explain','define','definition',
+    'mean','means','meaning','please','use','used','using']);
+
+  function tokenizeAsk(text) {
+    return (text.toLowerCase().match(/[a-z0-9]+/g) || []);
+  }
+
+  function splitSentences(text) {
+    return text.split(/(?<=[.!?])\s+(?=[A-Z(])/).map(s => s.trim()).filter(s => s.length > 15);
+  }
+
+  function answerQuestion(question) {
+    const qTokens = [...new Set(tokenizeAsk(question).filter(t => !ASK_STOPWORDS.has(t) && t.length > 1))];
+    if (!qTokens.length) return null;
+
+    let best = null;
+    searchIndex.forEach(entry => {
+      const titleTokens = tokenizeAsk(entry.title);
+      let score = 0;
+      qTokens.forEach(t => {
+        const re = new RegExp('\\b' + escapeRegExp(t) + '\\b', 'gi');
+        const bodyMatches = (entry.rawText.match(re) || []).length;
+        score += bodyMatches;
+        if (titleTokens.includes(t)) score += 4;
+      });
+      if (score > 0 && (!best || score > best.score)) {
+        best = { entry, score };
+      }
+    });
+    if (!best || best.score < 1) return null;
+
+    const sentences = splitSentences(best.entry.rawText);
+    let bestSentence = null, bestSentScore = -1;
+    sentences.forEach(sent => {
+      let sc = 0;
+      qTokens.forEach(t => {
+        const re = new RegExp('\\b' + escapeRegExp(t) + '\\b', 'i');
+        if (re.test(sent)) sc++;
+      });
+      if (sc > bestSentScore) { bestSentScore = sc; bestSentence = sent; }
+    });
+
+    const section = SECTIONS.find(s => s.id === best.entry.id);
+    return {
+      section,
+      sentence: bestSentence || sentences[0] || best.entry.rawText.slice(0, 200),
+      queryTerms: qTokens,
+    };
+  }
+
+  function highlightTerms(text, terms) {
+    let escaped = escapeHtml(text);
+    terms.forEach(t => {
+      const re = new RegExp('(' + escapeRegExp(t) + ')', 'ig');
+      escaped = escaped.replace(re, '<mark>$1</mark>');
+    });
+    return escaped;
+  }
+
+  function addAskMessage(role, html) {
+    const div = document.createElement('div');
+    div.className = 'ask-msg ask-msg-' + role;
+    div.innerHTML = html;
+    els.askMessages.appendChild(div);
+    els.askMessages.scrollTop = els.askMessages.scrollHeight;
+  }
+
+  function handleAskSubmit(question) {
+    question = question.trim();
+    if (!question) return;
+    addAskMessage('user', escapeHtml(question));
+    const result = answerQuestion(question);
+    if (!result || !result.section) {
+      addAskMessage('bot', `I couldn't find a clear match for that in the guideline. Try different words, or browse the sidebar — the search box and ⌘K palette can help too.`);
+      return;
+    }
+    const snippetHtml = highlightTerms(result.sentence, result.queryTerms);
+    const titlePlain = stripTags(result.section.title);
+    addAskMessage('bot', `${snippetHtml}
+      <span class="ask-source">${result.section.number ? result.section.number + ' · ' : ''}${escapeHtml(titlePlain)}</span>
+      <a class="ask-answer-link" href="#${result.section.id}">Read the full section →</a>`);
+  }
+
+  function openAsk() {
+    els.askPanel.classList.add('show');
+    els.askFab.classList.add('open');
+    if (!els.askMessages.children.length) {
+      addAskMessage('bot', `Ask a question about this guideline — e.g. "What is a competency question?" or "How do I reuse an existing ontology?" — and I'll pull the most relevant passage and point you to the right section.`);
+    }
+    setTimeout(() => els.askInput.focus(), 50);
+  }
+  function closeAsk() {
+    els.askPanel.classList.remove('show');
+    els.askFab.classList.remove('open');
+  }
+
+  els.askFab.addEventListener('click', openAsk);
+  els.askClose.addEventListener('click', closeAsk);
+  els.askForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleAskSubmit(els.askInput.value);
+    els.askInput.value = '';
+  });
+  els.askMessages.addEventListener('click', (e) => {
+    if (e.target.closest('.ask-answer-link')) closeAsk();
+  });
 
   // -------- back to top --------
   els.backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
@@ -1289,11 +1431,15 @@
       els.cmdkResults.innerHTML = `<div class="cmdk-empty">No matches for "${escapeHtml(query)}"</div>`;
       return;
     }
+    const q = query.trim();
     els.cmdkResults.innerHTML = cmdkItems.map((s, i) => {
       const crumb = breadcrumbFor(s).replace(/<[^>]+>/g, '').trim();
+      const entry = searchIndex.find(x => x.id === s.id);
+      const snippet = (q && entry) ? getSnippet(entry.rawText, q) : '';
       return `<div class="cmdk-item${i === 0 ? ' active' : ''}" data-index="${i}" data-id="${s.id}">
         <div class="cmdk-title">${s.number ? `<span class="cmdk-num">${escapeHtml(s.number)}</span>` : ''}${stripTags(s.title)}</div>
         ${crumb ? `<div class="cmdk-crumb">${escapeHtml(crumb)}</div>` : ''}
+        ${snippet ? `<div class="cmdk-snippet">${snippet}</div>` : ''}
       </div>`;
     }).join('');
   }
