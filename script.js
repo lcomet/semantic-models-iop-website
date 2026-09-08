@@ -466,7 +466,11 @@
     const resetBtn = document.getElementById('graph-reset');
     if (zoomInBtn) zoomInBtn.onclick = () => svg.transition().call(zoomBehavior.scaleBy, 1.3);
     if (zoomOutBtn) zoomOutBtn.onclick = () => svg.transition().call(zoomBehavior.scaleBy, 0.75);
-    if (resetBtn) resetBtn.onclick = () => fitToView(nodes, width, height, svg, zoomBehavior, d3sel, true);
+    if (resetBtn) resetBtn.onclick = () => {
+      hideGraphInfo();
+      clearHighlight(nodeGroup, linkGroup);
+      fitToView(nodes, width, height, svg, zoomBehavior, d3sel, true);
+    };
   }
 
   function fitToView(nodes, width, height, svg, zoomBehavior, d3sel, animate) {
@@ -637,7 +641,14 @@
     const resetBtn = document.getElementById('graph-reset');
     if (zoomInBtn) zoomInBtn.onclick = () => svg.transition().call(zoomBehavior.scaleBy, 1.3);
     if (zoomOutBtn) zoomOutBtn.onclick = () => svg.transition().call(zoomBehavior.scaleBy, 0.75);
-    if (resetBtn) resetBtn.onclick = () => svg.transition().call(zoomBehavior.transform, d3sel.zoomIdentity);
+    if (resetBtn) resetBtn.onclick = () => {
+      hideGraphInfo();
+      nodeGroup.classed('dim', false);
+      linkSel.classed('dim', false);
+      const filterInput = document.getElementById('graph-filter');
+      if (filterInput) filterInput.value = '';
+      svg.transition().call(zoomBehavior.transform, d3sel.zoomIdentity);
+    };
 
     landscapeRefs = { nodeGroup, linkSel };
   }
