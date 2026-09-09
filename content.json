@@ -1912,24 +1912,128 @@
     "filenameBase": "class-definitions",
     "columns": [
      {
+      "key": "id",
+      "label": "Identifier",
+      "placeholder": "e.g. Short_NUC_CL_001"
+     },
+     {
       "key": "name",
       "label": "Class Name",
       "placeholder": "e.g. Machine"
      },
      {
-      "key": "description",
-      "label": "Description",
-      "placeholder": "e.g. A physical device that performs a manufacturing operation"
+      "key": "label",
+      "label": "Label",
+      "placeholder": "If it differs from the Class Name"
      },
      {
-      "key": "superclass",
-      "label": "Superclass",
+      "key": "synonym",
+      "label": "Synonym",
+      "placeholder": "Alternative names for this class"
+     },
+     {
+      "key": "definition",
+      "label": "Definition",
+      "placeholder": "Meaning of the class"
+     },
+     {
+      "key": "defSource",
+      "label": "Definition Source",
+      "placeholder": "e.g. a specific standard or manual"
+     },
+     {
+      "key": "example",
+      "label": "Example of Usage",
+      "placeholder": "A use case where this class is used"
+     },
+     {
+      "key": "parent",
+      "label": "Parent Class (Superclass)",
       "placeholder": "e.g. PhysicalObject"
      },
      {
-      "key": "notes",
-      "label": "Notes",
-      "placeholder": "Synonyms, source, open questions\u2026"
+      "key": "child",
+      "label": "Child Class (Subclass)",
+      "placeholder": "e.g. MachineComponent"
+     },
+     {
+      "key": "equivalent",
+      "label": "Equivalent Class",
+      "placeholder": "Class with the same extension"
+     },
+     {
+      "key": "disjoint",
+      "label": "Disjoint Class",
+      "placeholder": "Class with no individuals in common"
+     },
+     {
+      "key": "editor",
+      "label": "Term Editor",
+      "placeholder": "Who defined this?"
+     }
+    ],
+    "legend": [
+     {
+      "term": "Identifier",
+      "desc": "A unique alphanumerical value used to identify a specific class, e.g. a short name for the use case, \"CL\" (for \"Class\"), and a consecutive number \u2014 [Short_NUC_CL_001]."
+     },
+     {
+      "term": "Class Name",
+      "desc": "The name of the class one is defining."
+     },
+     {
+      "term": "Label",
+      "desc": "The corresponding label, in case it differs from the Class Name."
+     },
+     {
+      "term": "Synonym",
+      "desc": "Alternative names for the same class one is defining."
+     },
+     {
+      "term": "Definition",
+      "desc": "Meaning of the current described class."
+     },
+     {
+      "term": "Definition Source",
+      "desc": "Origin from which the definition comes, for example a specific standard or manual."
+     },
+     {
+      "term": "Example of Usage",
+      "desc": "A use case or function in which the current described class is used."
+     },
+     {
+      "term": "Parent Class",
+      "desc": "Parent class to the current class. It helps to define the hierarchy of classes."
+     },
+     {
+      "term": "Child Class",
+      "desc": "The subclass of the current class. It helps to define the hierarchy of classes."
+     },
+     {
+      "term": "Equivalent Class",
+      "desc": "The two class descriptions involved have the same class extension (i.e., both class extensions contain exactly the same set of individuals)."
+     },
+     {
+      "term": "Disjoint Class",
+      "desc": "The class extensions of the two class descriptions involved have no individuals in common."
+     },
+     {
+      "term": "Term Editor",
+      "desc": "The person responsible for defining the class."
+     }
+    ],
+    "resources": [
+     {
+      "label": "Class Definition (Step 4)",
+      "url": "https://protege.stanford.edu/publications/ontology_development/ontology101.pdf"
+     },
+     {
+      "label": "Parent Class, Child Class relation",
+      "url": "http://protegeproject.github.io/protege/views/class-hierarchy/"
+     },
+     {
+      "label": "Equivalent Class, Disjoint Class",
+      "url": "http://protegeproject.github.io/protege/views/class-description/"
      }
     ]
    }
@@ -1951,14 +2055,34 @@
     "filenameBase": "property-definitions",
     "columns": [
      {
+      "key": "id",
+      "label": "Identifier",
+      "placeholder": "e.g. Short_NUC_PR_001"
+     },
+     {
       "key": "name",
       "label": "Property Name",
       "placeholder": "e.g. hasMachineComponent"
      },
      {
+      "key": "type",
+      "label": "Property Type",
+      "type": "select",
+      "options": [
+       "",
+       "DataProperty",
+       "ObjectProperty"
+      ]
+     },
+     {
+      "key": "characteristic",
+      "label": "Property Characteristic",
+      "placeholder": "e.g. Functional, Transitive, Symmetric\u2026"
+     },
+     {
       "key": "description",
-      "label": "Description",
-      "placeholder": "e.g. Relates a machine to one of its components"
+      "label": "Property Description",
+      "placeholder": "The logical description of the property"
      },
      {
       "key": "domain",
@@ -1971,9 +2095,57 @@
       "placeholder": "e.g. MachineComponent"
      },
      {
-      "key": "type",
-      "label": "Type",
-      "placeholder": "Object or Data"
+      "key": "editor",
+      "label": "Term Editor",
+      "placeholder": "Who defined this?"
+     }
+    ],
+    "legend": [
+     {
+      "term": "Property Name",
+      "desc": "The name of the property (attribute) belonging to a class(es)."
+     },
+     {
+      "term": "Property Type",
+      "desc": "Type of the property, which can be either DataProperty or ObjectProperty."
+     },
+     {
+      "term": "Property Characteristic",
+      "desc": "The asserted characteristics for the property."
+     },
+     {
+      "term": "Property Description",
+      "desc": "The logical description of the property."
+     },
+     {
+      "term": "Domain",
+      "desc": "The class to which the described class, using a given property, belongs."
+     },
+     {
+      "term": "Range",
+      "desc": "The class of the object (value) the described class refers to."
+     },
+     {
+      "term": "Term Editor",
+      "desc": "The person responsible for defining the property."
+     }
+    ],
+    "resources": [
+     {
+      "label": "Property/Attribute Definition (Step 5)",
+      "url": "https://protege.stanford.edu/publications/ontology_development/ontology101.pdf"
+     },
+     {
+      "label": "Property Characteristic",
+      "url": "http://protegeproject.github.io/protege/views/object-property-characteristics/"
+     },
+     {
+      "label": "Property Description",
+      "url": "http://protegeproject.github.io/protege/views/object-property-description/"
+     },
+     {
+      "label": "Domain and Range",
+      "url": "http://protegeproject.github.io/protege/views/object-property-description/"
      }
     ]
    }
@@ -1995,19 +2167,70 @@
     "filenameBase": "individuals-definitions",
     "columns": [
      {
+      "key": "id",
+      "label": "Identifier",
+      "placeholder": "e.g. Short_NUC_IN_001"
+     },
+     {
       "key": "name",
       "label": "Individual Name",
       "placeholder": "e.g. Resistor_01"
      },
      {
-      "key": "class",
-      "label": "Class (instance of)",
+      "key": "label",
+      "label": "Label",
+      "placeholder": "If it differs from the Individual Name"
+     },
+     {
+      "key": "instanceOf",
+      "label": "Instance of",
       "placeholder": "e.g. Resistor"
      },
      {
-      "key": "description",
-      "label": "Description",
-      "placeholder": "Notes, property values, source\u2026"
+      "key": "properties",
+      "label": "Properties",
+      "placeholder": "Property values for this instance"
+     },
+     {
+      "key": "editor",
+      "label": "Term Editor",
+      "placeholder": "Who defined this?"
+     }
+    ],
+    "legend": [
+     {
+      "term": "Identifier",
+      "desc": "A unique alphanumerical value used to identify a specific individual, e.g. a short name for the use case, \"IN\" (for \"Individual\"), and a consecutive number \u2014 [Short_NUC_IN_001]."
+     },
+     {
+      "term": "Individual Name",
+      "desc": "The name of the concrete objects in the ontology (machinery, people, unit of measurement, etc.)"
+     },
+     {
+      "term": "Label",
+      "desc": "Label assigned to an individual, in case it differs from its name."
+     },
+     {
+      "term": "Instance of",
+      "desc": "Name of the class the individual belongs to."
+     },
+     {
+      "term": "Properties",
+      "desc": "Corresponding properties of this particular instance concerning the class it belongs to."
+     },
+     {
+      "term": "Term Editor",
+      "desc": "The person responsible for defining the property."
+     }
+    ],
+    "resources": [
+     {
+      "label": "Creating Individuals",
+      "url": "http://protegeproject.github.io/protege/views/instances/"
+     },
+     {
+      "label": "Creating Instances (Step 7)",
+      "url": "https://protege.stanford.edu/publications/ontology_development/ontology101.pdf"
      }
     ]
    }

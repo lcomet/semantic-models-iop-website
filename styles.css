@@ -1345,6 +1345,9 @@ html.dark #toast{ background: var(--surface-2); color: var(--ink); border: 1px s
 }
 .tmpl-actions{ display: flex; gap: 8px; flex-wrap: wrap; }
 .tmpl-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--ink-soft);
@@ -1354,9 +1357,10 @@ html.dark #toast{ background: var(--surface-2); color: var(--ink); border: 1px s
   border-radius: 20px;
   cursor: pointer;
 }
+.tmpl-btn svg{ width: 13px; height: 13px; flex-shrink: 0; }
 .tmpl-btn:hover{ border-color: var(--accent); color: var(--accent-strong); }
-.tmpl-btn-ghost{ color: var(--ink-faint); }
-.tmpl-btn-ghost:hover{ border-color: #c0392b; color: #c0392b; }
+.tmpl-btn-ghost{ color: #b04632; border-color: #d9998866; background: #c0392b0d; }
+.tmpl-btn-ghost:hover{ border-color: #c0392b; color: #c0392b; background: #c0392b1a; }
 
 .tmpl-table-scroll{ overflow-x: auto; }
 .tmpl-table{

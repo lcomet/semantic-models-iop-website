@@ -799,7 +799,7 @@
         <td class="tmpl-row-remove"><button data-action="remove-row" aria-label="Remove row">×</button></td>
       </tr>`).join('');
     const legendHtml = b.legend ? `
-      <details class="tmpl-legend">
+      <details class="tmpl-legend" open>
         <summary>What do these fields mean?</summary>
         <dl class="tmpl-legend-list">
           ${b.legend.map(l => `<dt>${escapeHtml(l.term)}</dt><dd>${escapeHtml(l.desc)}</dd>`).join('')}
@@ -812,7 +812,10 @@
         <div class="tmpl-actions">
           <button class="tmpl-btn" data-action="export-csv">Export CSV</button>
           <button class="tmpl-btn" data-action="export-md">Export Markdown</button>
-          <button class="tmpl-btn tmpl-btn-ghost" data-action="clear-table">Clear all</button>
+          <button class="tmpl-btn tmpl-btn-ghost" data-action="clear-table">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            Clear & start new
+          </button>
         </div>
       </div>
       ${legendHtml}
@@ -850,7 +853,10 @@
         <span class="tmpl-hint">Saved only in your browser — nothing is uploaded.</span>
         <div class="tmpl-actions">
           <button class="tmpl-btn" data-action="export-md">Export Markdown</button>
-          <button class="tmpl-btn tmpl-btn-ghost" data-action="clear-form">Clear all</button>
+          <button class="tmpl-btn tmpl-btn-ghost" data-action="clear-form">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            Clear & start new
+          </button>
         </div>
       </div>
       ${fieldsHtml}
