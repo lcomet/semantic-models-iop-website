@@ -1447,6 +1447,100 @@ html.dark #toast{ background: var(--surface-2); color: var(--ink); border: 1px s
 @media (max-width: 860px){
   .tmpl-toolbar{ flex-direction: column; align-items: flex-start; }
 }
+
+.tmpl-table select{
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  padding: 7px 6px;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+.tmpl-table select:hover{ background: var(--surface-2); }
+.tmpl-table select:focus{ background: var(--paper); border-color: var(--accent); outline: none; }
+
+.tmpl-legend{
+  border-bottom: 1px solid var(--border);
+  background: var(--paper);
+}
+.tmpl-legend summary{
+  cursor: pointer;
+  padding: 10px 14px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--accent-strong);
+  list-style: none;
+}
+.tmpl-legend summary::-webkit-details-marker{ display: none; }
+.tmpl-legend summary::before{ content: '▸ '; }
+.tmpl-legend[open] summary::before{ content: '▾ '; }
+.tmpl-legend-list{
+  margin: 0;
+  padding: 0 16px 14px;
+}
+.tmpl-legend-list dt{
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--ink);
+  margin-top: 10px;
+}
+.tmpl-legend-list dd{
+  margin: 2px 0 0;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+.tmpl-resources-label{
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ink-faint);
+  margin: 14px 16px 4px;
+}
+.tmpl-resources{
+  margin: 0 0 12px;
+  padding: 0 16px;
+  list-style: disc;
+}
+.tmpl-resources li{ font-size: 12.5px; margin-bottom: 3px; }
+.tmpl-resources a{ color: var(--accent-strong); }
+
+.tmpl-group-header{
+  font-family: var(--font-ui) !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: var(--ink) !important;
+  margin: 22px 16px 0 !important;
+  max-width: none !important;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.tmpl-field.tmpl-field-indent{
+  margin-left: 16px;
+  padding-left: 14px;
+  border-left: 2px solid var(--border);
+}
+.tmpl-optional{
+  font-family: var(--font-ui);
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+.tmpl-field-hint{
+  font-family: var(--font-ui) !important;
+  font-size: 11.5px !important;
+  color: var(--ink-faint) !important;
+  margin: 0 0 5px !important;
+  max-width: none !important;
+  font-style: italic;
+}
 .abbrev-row{
   display: grid;
   grid-template-columns: minmax(110px, max-content) 1fr;

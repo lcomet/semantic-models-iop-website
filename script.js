@@ -782,14 +782,30 @@
     return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
   }
 
+  function renderTableCell(c, value) {
+    if (c.type === 'select') {
+      const opts = c.options.map(o => `<option value="${escapeAttr(o)}"${o === value ? ' selected' : ''}>${o ? escapeHtml(o) : '—'}</option>`).join('');
+      return `<td><select data-col="${escapeAttr(c.key)}">${opts}</select></td>`;
+    }
+    return `<td><input type="text" data-col="${escapeAttr(c.key)}" value="${escapeAttr(value || '')}" placeholder="${escapeAttr(c.placeholder || '')}"></td>`;
+  }
+
   function renderTemplateTable(b) {
     const rows = loadTemplateData(b.storageKey, null) || [{}, {}, {}];
     const colsJson = escapeAttr(JSON.stringify(b.columns));
     const headerHtml = b.columns.map(c => `<th>${escapeHtml(c.label)}</th>`).join('') + '<th class="tmpl-th-remove"></th>';
     const rowsHtml = rows.map((row, i) => `<tr data-row="${i}">
-        ${b.columns.map(c => `<td><input type="text" data-col="${c.key}" value="${escapeAttr(row[c.key] || '')}" placeholder="${escapeAttr(c.placeholder || '')}"></td>`).join('')}
+        ${b.columns.map(c => renderTableCell(c, row[c.key])).join('')}
         <td class="tmpl-row-remove"><button data-action="remove-row" aria-label="Remove row">×</button></td>
       </tr>`).join('');
+    const legendHtml = b.legend ? `
+      <details class="tmpl-legend">
+        <summary>What do these fields mean?</summary>
+        <dl class="tmpl-legend-list">
+          ${b.legend.map(l => `<dt>${escapeHtml(l.term)}</dt><dd>${escapeHtml(l.desc)}</dd>`).join('')}
+        </dl>
+        ${b.resources ? `<p class="tmpl-resources-label">Further reading:</p><ul class="tmpl-resources">${b.resources.map(r => `<li><a href="${escapeAttr(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.label)}</a></li>`).join('')}</ul>` : ''}
+      </details>` : '';
     return `<div class="tmpl-wrap" data-storage-key="${escapeAttr(b.storageKey)}" data-columns="${colsJson}" data-filename="${escapeAttr(b.filenameBase)}" data-kind="table">
       <div class="tmpl-toolbar">
         <span class="tmpl-hint">Saved only in your browser — nothing is uploaded.</span>
@@ -799,6 +815,7 @@
           <button class="tmpl-btn tmpl-btn-ghost" data-action="clear-table">Clear all</button>
         </div>
       </div>
+      ${legendHtml}
       <div class="tmpl-table-scroll">
         <table class="tmpl-table">
           <thead><tr>${headerHtml}</tr></thead>
@@ -812,11 +829,22 @@
   function renderTemplateForm(b) {
     const data = loadTemplateData(b.storageKey, {}) || {};
     const fieldsJson = escapeAttr(JSON.stringify(b.fields));
-    const fieldsHtml = b.fields.map(f => `
-      <div class="tmpl-field">
-        <label class="tmpl-field-label">${escapeHtml(f.label)}</label>
+    let lastGroup = null;
+    const fieldsHtml = b.fields.map(f => {
+      let groupHeader = '';
+      if (f.group && f.group !== lastGroup) {
+        groupHeader = `<p class="tmpl-group-header">${escapeHtml(f.group)}</p>`;
+      }
+      lastGroup = f.group || null;
+      const optTag = f.optional ? ' <span class="tmpl-optional">(optional)</span>' : '';
+      const hint = f.hint ? `<p class="tmpl-field-hint">${escapeHtml(f.hint)}</p>` : '';
+      const indentClass = f.group ? ' tmpl-field-indent' : '';
+      return `${groupHeader}<div class="tmpl-field${indentClass}">
+        <label class="tmpl-field-label">${escapeHtml(f.label)}${optTag}</label>
+        ${hint}
         <textarea data-field="${escapeAttr(f.key)}" placeholder="${escapeAttr(f.placeholder || '')}" rows="2">${escapeHtml(data[f.key] || '')}</textarea>
-      </div>`).join('');
+      </div>`;
+    }).join('');
     return `<div class="tmpl-wrap tmpl-form" data-storage-key="${escapeAttr(b.storageKey)}" data-fields="${fieldsJson}" data-filename="${escapeAttr(b.filenameBase)}" data-kind="form">
       <div class="tmpl-toolbar">
         <span class="tmpl-hint">Saved only in your browser — nothing is uploaded.</span>
@@ -833,7 +861,7 @@
     const rows = [];
     wrap.querySelectorAll('tbody tr').forEach(tr => {
       const row = {};
-      tr.querySelectorAll('input[data-col]').forEach(inp => { row[inp.dataset.col] = inp.value; });
+      tr.querySelectorAll('input[data-col], select[data-col]').forEach(inp => { row[inp.dataset.col] = inp.value; });
       rows.push(row);
     });
     return rows;
@@ -855,6 +883,9 @@
       wrap.addEventListener('input', (e) => {
         if (e.target.matches('input[data-col]')) persist();
       });
+      wrap.addEventListener('change', (e) => {
+        if (e.target.matches('select[data-col]')) persist();
+      });
 
       wrap.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-action]');
@@ -865,10 +896,11 @@
           const idx = tbody.children.length;
           const tr = document.createElement('tr');
           tr.dataset.row = idx;
-          tr.innerHTML = columns.map(c => `<td><input type="text" data-col="${escapeAttr(c.key)}" value="" placeholder="${escapeAttr(c.placeholder || '')}"></td>`).join('') +
+          tr.innerHTML = columns.map(c => renderTableCell(c, '')).join('') +
             `<td class="tmpl-row-remove"><button data-action="remove-row" aria-label="Remove row">×</button></td>`;
           tbody.appendChild(tr);
-          tr.querySelector('input').focus();
+          const firstField = tr.querySelector('input, select');
+          if (firstField) firstField.focus();
         } else if (action === 'remove-row') {
           const tr = btn.closest('tr');
           const tbody = wrap.querySelector('tbody');
@@ -876,6 +908,7 @@
             tr.remove();
           } else {
             tr.querySelectorAll('input').forEach(inp => inp.value = '');
+            tr.querySelectorAll('select').forEach(sel => sel.value = '');
           }
           persist();
         } else if (action === 'export-csv') {
@@ -894,7 +927,7 @@
             saveTemplateData(storageKey, [{}, {}, {}]);
             const tbody = wrap.querySelector('tbody');
             tbody.innerHTML = [0, 1, 2].map(i => `<tr data-row="${i}">` +
-              columns.map(c => `<td><input type="text" data-col="${escapeAttr(c.key)}" value="" placeholder="${escapeAttr(c.placeholder || '')}"></td>`).join('') +
+              columns.map(c => renderTableCell(c, '')).join('') +
               `<td class="tmpl-row-remove"><button data-action="remove-row" aria-label="Remove row">×</button></td></tr>`).join('');
           }
         }
@@ -916,9 +949,16 @@
         const btn = e.target.closest('[data-action]');
         if (!btn) return;
         if (btn.dataset.action === 'export-md') {
-          const lines = fields.map(f => {
+          let lastGroup = null;
+          const lines = [];
+          fields.forEach(f => {
+            if (f.group && f.group !== lastGroup) {
+              lines.push(`## ${f.group}\n`);
+            }
+            lastGroup = f.group || null;
+            const heading = f.group ? f.label : `## ${f.label}`;
             const val = wrap.querySelector(`textarea[data-field="${f.key}"]`).value.trim();
-            return `## ${f.label}\n\n${val || '_(not filled in)_'}\n`;
+            lines.push(`${f.group ? '### ' + heading.replace(/^[a-z]\.\s*/i, '') : heading}\n\n${val || '_(not filled in)_'}\n`);
           });
           downloadBlob(new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' }), wrap.dataset.filename + '.md');
         } else if (btn.dataset.action === 'clear-form') {
