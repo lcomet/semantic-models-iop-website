@@ -28,7 +28,6 @@
     cmdkOverlay: document.getElementById('cmdk-overlay'),
     cmdkInput: document.getElementById('cmdk-input'),
     cmdkResults: document.getElementById('cmdk-results'),
-    pageOutline: document.getElementById('page-outline'),
     main: document.getElementById('main'),
     displaySettingsBtn: document.getElementById('display-settings-btn'),
     displaySettingsPanel: document.getElementById('display-settings-panel'),
@@ -239,36 +238,6 @@
     return `<div class="child-index"><p class="child-index-label">In this chapter</p><div class="child-grid">${cards}</div></div>`;
   }
 
-  // -------- on-this-page outline (figures/tables on the current page) --------
-  function buildPageOutline(s) {
-    const items = [];
-    function walk(blocks) {
-      (blocks || []).forEach(b => {
-        if ((b.type === 'figure' || b.type === 'figure-group') && b.num) items.push({ anchor: 'figure-' + b.num, label: 'Figure ' + b.num });
-        if (b.type === 'table' && b.num) items.push({ anchor: 'table-' + b.num, label: 'Table ' + b.num });
-        if (b.type === 'ul' || b.type === 'ol') (b.items || []).forEach(it => walk(it.blocks));
-        if (b.type === 'callout-blocks' || b.type === 'raw') walk(b.blocks);
-      });
-    }
-    walk(s.blocks);
-    return items;
-  }
-
-  function renderPageOutline(s) {
-    const items = buildPageOutline(s);
-    if (items.length < 2) {
-      els.pageOutline.innerHTML = '';
-      els.main.classList.remove('has-outline');
-      return;
-    }
-    els.main.classList.add('has-outline');
-    els.pageOutline.innerHTML = `
-      <p class="page-outline-label">On this page</p>
-      <nav class="page-outline-list">
-        ${items.map(it => `<a href="#${it.anchor}"><span class="ol-num">${it.label}</span></a>`).join('')}
-      </nav>`;
-  }
-
   // -------- ontology graph explorer --------
   let d3LoadPromise = null;
   function loadD3() {
@@ -302,7 +271,6 @@
           <span class="legend-item"><span class="legend-line property-line"></span>object property</span>
         </div>
         <div class="graph-controls">
-          <button id="graph-export-ttl" class="toolbar-btn" hidden>Export as Turtle (.ttl)</button>
           <input id="graph-filter" class="graph-filter-input" type="text" placeholder="Filter by name…" hidden>
           <button id="graph-zoom-out" class="icon-btn" aria-label="Zoom out">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
@@ -348,8 +316,6 @@
     const filterInput = document.getElementById('graph-filter');
     filterInput.hidden = view !== 'landscape';
     filterInput.value = '';
-    const ttlBtn = document.getElementById('graph-export-ttl');
-    ttlBtn.hidden = view !== 'mine';
     const projBarSlot = document.getElementById('graph-proj-bar');
     if (view === 'mine') {
       projBarSlot.innerHTML = renderProjectBar();
@@ -369,10 +335,6 @@
     });
     const filterInput = document.getElementById('graph-filter');
     filterInput.addEventListener('input', (e) => filterLandscapeNodes(e.target.value));
-    document.getElementById('graph-export-ttl').addEventListener('click', () => {
-      const ttl = generateTurtle();
-      downloadBlob(new Blob([ttl], { type: 'text/turtle;charset=utf-8' }), 'my-ontology.ttl');
-    });
     await loadAndBuildGraph('classes');
   }
 
@@ -949,6 +911,7 @@
         <button class="proj-btn" data-proj-action="new" title="New project">+ New</button>
         <button class="proj-btn" data-proj-action="rename" title="Rename this project">Rename</button>
         <button class="proj-btn proj-btn-danger" data-proj-action="delete" title="Delete this project">Delete</button>
+        <button class="proj-btn proj-btn-ttl" data-proj-action="export-ttl" title="Export this project's classes and properties as an OWL/Turtle file">Export as Turtle (.ttl)</button>
       </div>
     </div>`;
   }
@@ -984,6 +947,10 @@
           current.name = name.trim();
           saveProjectsMeta(meta);
           onSwitch();
+        } else if (action === 'export-ttl') {
+          const ttl = generateTurtle();
+          downloadBlob(new Blob([ttl], { type: 'text/turtle;charset=utf-8' }), sanitizeQName(getActiveProjectName()).toLowerCase() + '.ttl');
+          showToast('Turtle file downloaded');
         } else if (action === 'delete') {
           if (meta.projects.length <= 1) {
             alert('You need at least one project — create a new one before deleting this one.');
@@ -1530,26 +1497,19 @@
     if (!id) {
       els.content.innerHTML = buildDocHeader();
       document.title = 'Guidelines for the Creation of Semantic Models in the IoP';
-      els.pageOutline.innerHTML = '';
-      els.main.classList.remove('has-outline');
     } else if (id === 'graph') {
       els.content.innerHTML = renderGraphPage();
       document.title = 'Ontology Graph Explorer · Semantic Models in the IoP';
-      els.pageOutline.innerHTML = '';
-      els.main.classList.remove('has-outline');
       initOntologyGraph();
     } else if (id === 'progress') {
       els.content.innerHTML = renderProgressPage();
       document.title = 'Workflow Progress · Semantic Models in the IoP';
-      els.pageOutline.innerHTML = '';
-      els.main.classList.remove('has-outline');
       attachProgressHandlers();
     } else {
       const s = SECTIONS.find(x => x.id === id);
       if (!s) { renderSectionDOM(null); return; }
       els.content.innerHTML = renderSectionPage(s);
       document.title = stripTags(s.title) + ' · Semantic Models in the IoP';
-      renderPageOutline(s);
     }
     setActiveTOC(currentSectionId);
     attachLightboxHandlers();

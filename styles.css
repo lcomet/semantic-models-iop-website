@@ -410,54 +410,6 @@ nav#toc::-webkit-scrollbar-thumb{ background: var(--border-strong); border-radiu
 }
 #overlay.show{ display: block; }
 
-/* on-this-page outline (right rail, wide screens only) */
-#page-outline{ display: none; }
-@media (min-width: 1300px){
-  #main.has-outline{
-    display: grid;
-    grid-template-columns: minmax(0,1fr) minmax(0, var(--content-max)) 200px minmax(0,1fr);
-    column-gap: 32px;
-    padding-left: 32px;
-    padding-right: 32px;
-  }
-  #main.has-outline #content{ grid-column: 2; max-width: none; width: 100%; min-width: 0; }
-  #main.has-outline #page-outline{
-    display: block;
-    grid-column: 3;
-    align-self: start;
-    position: sticky;
-    top: 56px;
-  }
-}
-.page-outline-label{
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--ink-faint);
-  margin: 0 0 12px;
-}
-.page-outline-list{
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-left: 1px solid var(--border);
-  padding-left: 14px;
-}
-.page-outline-list a{
-  font-family: var(--font-ui);
-  font-size: 12.5px;
-  color: var(--ink-soft);
-  text-decoration: none;
-  line-height: 1.4;
-}
-.page-outline-list a:hover{ color: var(--accent); }
-.page-outline-list .ol-num{
-  font-family: var(--font-mono);
-  color: var(--accent);
-  margin-right: 4px;
-}
-
 /* ---------------- main content ---------------- */
 #main{
   flex: 1;
@@ -1486,6 +1438,13 @@ html.dark #toast{ background: var(--surface-2); color: var(--ink); border: 1px s
 }
 .proj-btn:hover{ border-color: var(--accent); color: var(--accent-strong); }
 .proj-btn-danger:hover{ border-color: #c0392b; color: #c0392b; }
+.proj-btn-ttl{
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 600;
+}
+.proj-btn-ttl:hover{ background: var(--accent-strong); border-color: var(--accent-strong); color: var(--accent-contrast); }
 
 .tmpl-wrap{
   margin: 12px 0 24px;
