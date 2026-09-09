@@ -1,6 +1,14 @@
 (function () {
   'use strict';
 
+  // ---------------------------------------------------------------------
+  // Optional: to collect real, aggregate 👍/👎 feedback instead of just
+  // saving it in each visitor's own browser, sign up for a free form
+  // backend (e.g. https://formspree.io) and paste your endpoint URL here.
+  // Leave blank to keep feedback fully local (the default).
+  // ---------------------------------------------------------------------
+  const FEEDBACK_ENDPOINT_URL = '';
+
   const els = {
     toc: document.getElementById('toc'),
     content: document.getElementById('content'),
@@ -284,7 +292,9 @@
       <div class="graph-tabs">
         <button class="graph-tab active" data-view="classes">Chapter 2 example</button>
         <button class="graph-tab" data-view="landscape">Domain ontologies landscape (Appendix)</button>
+        <button class="graph-tab" data-view="mine">My Ontology (from your templates)</button>
       </div>
+      <div id="graph-proj-bar"></div>
       <div class="graph-toolbar">
         <div class="graph-legend" id="graph-legend">
           <span class="legend-item"><span class="legend-dot"></span>Class</span>
@@ -292,6 +302,7 @@
           <span class="legend-item"><span class="legend-line property-line"></span>object property</span>
         </div>
         <div class="graph-controls">
+          <button id="graph-export-ttl" class="toolbar-btn" hidden>Export as Turtle (.ttl)</button>
           <input id="graph-filter" class="graph-filter-input" type="text" placeholder="Filter by name…" hidden>
           <button id="graph-zoom-out" class="icon-btn" aria-label="Zoom out">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
@@ -313,6 +324,7 @@
   const GRAPH_INTRO_TEXT = {
     classes: "The classes and relations from the guideline's running example (sections 2.3–2.4), as an interactive graph. Drag nodes, scroll or pinch to zoom, and click any node to see how it connects — with a link straight to where it's explained in the text.",
     landscape: "The 42 domain ontologies from Appendix A.2, connected to the 15 manufacturing domains they cover. Click a domain to see which ontologies address it, click an ontology to see what it covers, or filter by name — then jump to the full comparison table.",
+    mine: "Your own Class and Property Definition templates (Section 6), rendered live as a graph. Fill in classes and properties there, then come back here to see your ontology take shape — and export it as a Turtle file when you're ready.",
   };
   const GRAPH_LEGEND_HTML = {
     classes: `<span class="legend-item"><span class="legend-dot"></span>Class</span>
@@ -321,6 +333,9 @@
     landscape: `<span class="legend-item"><span class="legend-dot domain-dot"></span>Domain</span>
       <span class="legend-item"><span class="legend-dot"></span>Ontology / Semantic Model</span>
       <span class="legend-item"><span class="legend-line property-line"></span>covers</span>`,
+    mine: `<span class="legend-item"><span class="legend-dot"></span>Class</span>
+      <span class="legend-item"><span class="legend-line hierarchy-line"></span>subClassOf</span>
+      <span class="legend-item"><span class="legend-line property-line"></span>object property</span>`,
   };
 
   let currentGraphView = 'classes';
@@ -333,6 +348,15 @@
     const filterInput = document.getElementById('graph-filter');
     filterInput.hidden = view !== 'landscape';
     filterInput.value = '';
+    const ttlBtn = document.getElementById('graph-export-ttl');
+    ttlBtn.hidden = view !== 'mine';
+    const projBarSlot = document.getElementById('graph-proj-bar');
+    if (view === 'mine') {
+      projBarSlot.innerHTML = renderProjectBar();
+      attachProjectBarHandlers(() => loadAndBuildGraph('mine'));
+    } else {
+      projBarSlot.innerHTML = '';
+    }
     loadAndBuildGraph(view);
   }
 
@@ -345,11 +369,35 @@
     });
     const filterInput = document.getElementById('graph-filter');
     filterInput.addEventListener('input', (e) => filterLandscapeNodes(e.target.value));
+    document.getElementById('graph-export-ttl').addEventListener('click', () => {
+      const ttl = generateTurtle();
+      downloadBlob(new Blob([ttl], { type: 'text/turtle;charset=utf-8' }), 'my-ontology.ttl');
+    });
     await loadAndBuildGraph('classes');
   }
 
   async function loadAndBuildGraph(view) {
     const loadingEl = document.getElementById('graph-loading');
+    if (view === 'mine') {
+      if (loadingEl) { loadingEl.style.display = 'block'; loadingEl.textContent = 'Loading graph…'; }
+      try {
+        await loadD3();
+        const data = buildUserOntologyGraphData();
+        if (!document.getElementById('graph-svg')) return;
+        if (!data.nodes.length) {
+          if (loadingEl) { loadingEl.style.display = 'block'; loadingEl.textContent = "You haven't added any classes yet — fill in Section 6.3 (Class Definition), then come back here."; }
+          const svg = window.d3.select('#graph-svg');
+          svg.selectAll('*').remove();
+          return;
+        }
+        if (loadingEl) loadingEl.style.display = 'none';
+        buildForceGraph(data);
+        window.addEventListener('resize', onGraphResize);
+      } catch (err) {
+        if (loadingEl) loadingEl.textContent = 'Could not build the graph — try refreshing the page.';
+      }
+      return;
+    }
     const file = view === 'landscape' ? 'ontology-landscape.json' : 'ontology-graph.json';
     if (loadingEl) { loadingEl.style.display = 'block'; loadingEl.textContent = 'Loading graph…'; }
     try {
@@ -366,6 +414,92 @@
     } catch (err) {
       if (loadingEl) loadingEl.textContent = 'Could not load the graph — try refreshing the page.';
     }
+  }
+
+  function buildUserOntologyGraphData() {
+    const classRows = (loadTemplateData(scopedKey('tmpl:class'), []) || []).filter(r => (r.name || '').trim());
+    const propRows = (loadTemplateData(scopedKey('tmpl:property'), []) || []).filter(r => (r.name || '').trim() && (r.domain || '').trim() && (r.range || '').trim());
+    const nodeNames = new Set();
+    const nodes = [];
+    function addNode(name) {
+      const key = name.trim();
+      if (!key || nodeNames.has(key)) return;
+      nodeNames.add(key);
+      nodes.push({ id: key, type: 'class', section: null });
+    }
+    classRows.forEach(r => addNode(r.name));
+    const edges = [];
+    classRows.forEach(r => {
+      if ((r.parent || '').trim()) {
+        addNode(r.parent);
+        edges.push({ source: r.name.trim(), target: r.parent.trim(), label: 'subClassOf', kind: 'hierarchy', section: null });
+      }
+    });
+    propRows.forEach(r => {
+      addNode(r.domain);
+      addNode(r.range);
+      edges.push({ source: r.domain.trim(), target: r.range.trim(), label: r.name.trim(), kind: 'property', section: null });
+    });
+    return { nodes, edges };
+  }
+
+  function sanitizeQName(name) {
+    return String(name).trim().replace(/[^A-Za-z0-9_]/g, '_').replace(/^(\d)/, '_$1') || 'Unnamed';
+  }
+
+  function generateTurtle() {
+    const classRows = (loadTemplateData(scopedKey('tmpl:class'), []) || []).filter(r => (r.name || '').trim());
+    const propRows = (loadTemplateData(scopedKey('tmpl:property'), []) || []).filter(r => (r.name || '').trim());
+    const indivRows = (loadTemplateData(scopedKey('tmpl:individuals'), []) || []).filter(r => (r.name || '').trim());
+    const lines = [
+      '@prefix : <http://example.org/ontology#> .',
+      '@prefix owl: <http://www.w3.org/2002/07/owl#> .',
+      '@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .',
+      '@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .',
+      '',
+      `# Generated from "${getActiveProjectName()}" — Semantic Models in the IoP guideline`,
+      '',
+    ];
+    if (classRows.length) {
+      lines.push('#################################################################', '#    Classes', '#################################################################', '');
+      classRows.forEach(r => {
+        const qn = sanitizeQName(r.name);
+        lines.push(`:${qn} a owl:Class ;`);
+        const props = [];
+        if ((r.parent || '').trim()) props.push(`    rdfs:subClassOf :${sanitizeQName(r.parent)}`);
+        if ((r.label || '').trim()) props.push(`    rdfs:label "${r.label.replace(/"/g, '\\"')}"`);
+        if ((r.definition || '').trim()) props.push(`    rdfs:comment "${r.definition.replace(/"/g, '\\"')}"`);
+        if (props.length) lines.push(props.join(' ;\n') + ' .'); else lines[lines.length - 1] = lines[lines.length - 1].replace(' ;', ' .');
+        lines.push('');
+      });
+    }
+    if (propRows.length) {
+      lines.push('#################################################################', '#    Object and Data Properties', '#################################################################', '');
+      propRows.forEach(r => {
+        const qn = sanitizeQName(r.name);
+        const propType = r.type === 'DataProperty' ? 'owl:DatatypeProperty' : 'owl:ObjectProperty';
+        lines.push(`:${qn} a ${propType} ;`);
+        const props = [];
+        if ((r.domain || '').trim()) props.push(`    rdfs:domain :${sanitizeQName(r.domain)}`);
+        if ((r.range || '').trim()) props.push(`    rdfs:range ${r.type === 'DataProperty' ? 'xsd:string' : ':' + sanitizeQName(r.range)}`);
+        if ((r.description || '').trim()) props.push(`    rdfs:comment "${r.description.replace(/"/g, '\\"')}"`);
+        if (props.length) lines.push(props.join(' ;\n') + ' .'); else lines[lines.length - 1] = lines[lines.length - 1].replace(' ;', ' .');
+        lines.push('');
+      });
+    }
+    if (indivRows.length) {
+      lines.push('#################################################################', '#    Individuals', '#################################################################', '');
+      indivRows.forEach(r => {
+        const qn = sanitizeQName(r.name);
+        const cls = (r.instanceOf || '').trim() ? sanitizeQName(r.instanceOf) : 'Thing';
+        lines.push(`:${qn} a :${cls} .`);
+      });
+      lines.push('');
+    }
+    if (!classRows.length && !propRows.length && !indivRows.length) {
+      lines.push('# No classes, properties, or individuals defined yet.', '# Fill in Section 6.3–6.5 to generate real content here.');
+    }
+    return lines.join('\n');
   }
 
   let graphResizeTimer = null;
@@ -525,12 +659,15 @@
     if (!card) return;
     const sectionObj = SECTIONS.find(s => s.id === d.section);
     const sectionTitle = sectionObj ? stripTags(sectionObj.title) : '';
+    const editLink = currentGraphView === 'mine' && !sectionObj
+      ? `<a class="gi-link" href="#${d.isEdge ? 'sec-6-4' : 'sec-6-3'}">Edit in ${d.isEdge ? 'Property' : 'Class'} Definition →</a>`
+      : '';
     if (d.isEdge) {
       card.innerHTML = `
         <div class="gi-type">Object property</div>
         <div class="gi-name">${escapeHtml(d.id)}</div>
         <div class="gi-detail">${escapeHtml(d.from)} → ${escapeHtml(d.to)}</div>
-        ${sectionObj ? `<a class="gi-link" href="#${d.section}">Read in "${escapeHtml(sectionTitle)}" →</a>` : ''}
+        ${sectionObj ? `<a class="gi-link" href="#${d.section}">Read in "${escapeHtml(sectionTitle)}" →</a>` : editLink}
       `;
       nodeGroup.classed('dim', true);
       linkGroup.classed('dim', l => l.label !== d.id);
@@ -549,7 +686,7 @@
       card.innerHTML = `
         <div class="gi-type">Class</div>
         <div class="gi-name">${escapeHtml(d.id)}</div>
-        ${sectionObj ? `<a class="gi-link" href="#${d.section}">Read in "${escapeHtml(sectionTitle)}" →</a>` : ''}
+        ${sectionObj ? `<a class="gi-link" href="#${d.section}">Read in "${escapeHtml(sectionTitle)}" →</a>` : editLink}
       `;
     }
     card.hidden = false;
@@ -767,6 +904,104 @@
     try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { /* storage full or blocked */ }
   }
 
+  // -------- multi-project support for templates --------
+  const PROJECTS_META_KEY = 'tmpl:projects-meta';
+  const LEGACY_TEMPLATE_KEYS = ['tmpl:orsd', 'tmpl:cq', 'tmpl:class', 'tmpl:property', 'tmpl:individuals'];
+  const ALL_TEMPLATE_BASE_KEYS = LEGACY_TEMPLATE_KEYS;
+
+  function uid() {
+    return Math.random().toString(36).slice(2, 9);
+  }
+
+  function getProjectsMeta() {
+    let meta = loadTemplateData(PROJECTS_META_KEY, null);
+    if (!meta || !meta.projects || !meta.projects.length) {
+      meta = { activeId: 'default', projects: [{ id: 'default', name: 'My Ontology' }] };
+      // migrate any pre-existing unscoped data into the default project so nobody loses work
+      LEGACY_TEMPLATE_KEYS.forEach(k => {
+        const existing = localStorage.getItem(k);
+        if (existing != null && localStorage.getItem(k + '::default') == null) {
+          localStorage.setItem(k + '::default', existing);
+        }
+      });
+      saveProjectsMeta(meta);
+    }
+    return meta;
+  }
+  function saveProjectsMeta(meta) { saveTemplateData(PROJECTS_META_KEY, meta); }
+  function getActiveProjectId() { return getProjectsMeta().activeId; }
+  function getActiveProjectName() {
+    const meta = getProjectsMeta();
+    const p = meta.projects.find(p => p.id === meta.activeId);
+    return p ? p.name : 'My Ontology';
+  }
+  function scopedKey(base) { return base + '::' + getActiveProjectId(); }
+
+  function renderProjectBar() {
+    const meta = getProjectsMeta();
+    const options = meta.projects.map(p => `<option value="${escapeAttr(p.id)}"${p.id === meta.activeId ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('');
+    return `<div class="proj-bar">
+      <div class="proj-bar-left">
+        <span class="proj-label">Project</span>
+        <select id="proj-select">${options}</select>
+      </div>
+      <div class="proj-bar-actions">
+        <button class="proj-btn" data-proj-action="new" title="New project">+ New</button>
+        <button class="proj-btn" data-proj-action="rename" title="Rename this project">Rename</button>
+        <button class="proj-btn proj-btn-danger" data-proj-action="delete" title="Delete this project">Delete</button>
+      </div>
+    </div>`;
+  }
+
+  function attachProjectBarHandlers(onSwitch) {
+    const bar = document.querySelector('.proj-bar');
+    if (!bar) return;
+    const select = bar.querySelector('#proj-select');
+
+    select.addEventListener('change', () => {
+      const meta = getProjectsMeta();
+      meta.activeId = select.value;
+      saveProjectsMeta(meta);
+      onSwitch();
+    });
+
+    bar.querySelectorAll('[data-proj-action]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.projAction;
+        const meta = getProjectsMeta();
+        if (action === 'new') {
+          const name = prompt('Name for the new project:', 'New Ontology');
+          if (!name || !name.trim()) return;
+          const id = uid();
+          meta.projects.push({ id, name: name.trim() });
+          meta.activeId = id;
+          saveProjectsMeta(meta);
+          onSwitch();
+        } else if (action === 'rename') {
+          const current = meta.projects.find(p => p.id === meta.activeId);
+          const name = prompt('Rename project:', current ? current.name : '');
+          if (!name || !name.trim()) return;
+          current.name = name.trim();
+          saveProjectsMeta(meta);
+          onSwitch();
+        } else if (action === 'delete') {
+          if (meta.projects.length <= 1) {
+            alert('You need at least one project — create a new one before deleting this one.');
+            return;
+          }
+          if (!confirm('Delete this project and all its saved data? This can\'t be undone.')) return;
+          const deletingId = meta.activeId;
+          ALL_TEMPLATE_BASE_KEYS.forEach(k => localStorage.removeItem(k + '::' + deletingId));
+          localStorage.removeItem('tmpl:steps::' + deletingId);
+          meta.projects = meta.projects.filter(p => p.id !== deletingId);
+          meta.activeId = meta.projects[0].id;
+          saveProjectsMeta(meta);
+          onSwitch();
+        }
+      });
+    });
+  }
+
   function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -791,7 +1026,8 @@
   }
 
   function renderTemplateTable(b) {
-    const rows = loadTemplateData(b.storageKey, null) || [{}, {}, {}];
+    const storageKey = scopedKey(b.storageKey);
+    const rows = loadTemplateData(storageKey, null) || [{}, {}, {}];
     const colsJson = escapeAttr(JSON.stringify(b.columns));
     const headerHtml = b.columns.map(c => `<th>${escapeHtml(c.label)}</th>`).join('') + '<th class="tmpl-th-remove"></th>';
     const rowsHtml = rows.map((row, i) => `<tr data-row="${i}">
@@ -806,7 +1042,7 @@
         </dl>
         ${b.resources ? `<p class="tmpl-resources-label">Further reading:</p><ul class="tmpl-resources">${b.resources.map(r => `<li><a href="${escapeAttr(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.label)}</a></li>`).join('')}</ul>` : ''}
       </details>` : '';
-    return `<div class="tmpl-wrap" data-storage-key="${escapeAttr(b.storageKey)}" data-columns="${colsJson}" data-filename="${escapeAttr(b.filenameBase)}" data-kind="table">
+    return `${renderProjectBar()}<div class="tmpl-wrap" data-storage-key="${escapeAttr(storageKey)}" data-columns="${colsJson}" data-filename="${escapeAttr(b.filenameBase)}" data-kind="table">
       <div class="tmpl-toolbar">
         <span class="tmpl-hint">Saved only in your browser — nothing is uploaded.</span>
         <div class="tmpl-actions">
@@ -830,7 +1066,8 @@
   }
 
   function renderTemplateForm(b) {
-    const data = loadTemplateData(b.storageKey, {}) || {};
+    const storageKey = scopedKey(b.storageKey);
+    const data = loadTemplateData(storageKey, {}) || {};
     const fieldsJson = escapeAttr(JSON.stringify(b.fields));
     let lastGroup = null;
     const fieldsHtml = b.fields.map(f => {
@@ -848,7 +1085,7 @@
         <textarea data-field="${escapeAttr(f.key)}" placeholder="${escapeAttr(f.placeholder || '')}" rows="2">${escapeHtml(data[f.key] || '')}</textarea>
       </div>`;
     }).join('');
-    return `<div class="tmpl-wrap tmpl-form" data-storage-key="${escapeAttr(b.storageKey)}" data-fields="${fieldsJson}" data-filename="${escapeAttr(b.filenameBase)}" data-kind="form">
+    return `${renderProjectBar()}<div class="tmpl-wrap tmpl-form" data-storage-key="${escapeAttr(storageKey)}" data-fields="${fieldsJson}" data-filename="${escapeAttr(b.filenameBase)}" data-kind="form">
       <div class="tmpl-toolbar">
         <span class="tmpl-hint">Saved only in your browser — nothing is uploaded.</span>
         <div class="tmpl-actions">
@@ -873,11 +1110,107 @@
     return rows;
   }
 
+  // -------- workflow progress tracker (Section 3.2's 11 steps) --------
+  const WORKFLOW_STEPS = [
+    { num: 1, title: 'Identify and specify the use case', auto: null },
+    { num: 2, title: 'Identify and define scope and purpose', auto: 'orsd' },
+    { num: 3, title: 'Define competency questions', auto: 'cq' },
+    { num: 4, title: 'Verify and refine competency questions', auto: 'cq' },
+    { num: 5, title: 'Conceptualize the ontology', auto: 'classOrProperty' },
+    { num: 6, title: 'Consider reusing existing ontologies', auto: null, link: 'sec-7' },
+    { num: 7, title: 'Formalize the ORSD and competency questions', auto: 'orsdAndCq' },
+    { num: 8, title: 'Evaluate the ontology', auto: null, link: 'sec-5-2' },
+    { num: 9, title: 'Document the ontology', auto: null, link: 'sec-5' },
+    { num: 10, title: 'Publish the ontology', auto: null, link: 'sec-5' },
+    { num: 11, title: 'Bugs or Improvements', auto: null },
+  ];
+  const STEP_TEMPLATE_LINKS = {
+    orsd: 'sec-6-1', cq: 'sec-6-2', classOrProperty: 'sec-6-3', orsdAndCq: 'sec-6-1',
+  };
+
+  function hasTemplateData(baseKey) {
+    const data = loadTemplateData(scopedKey(baseKey), null);
+    if (!data) return false;
+    if (Array.isArray(data)) return data.some(row => Object.values(row).some(v => (v || '').toString().trim()));
+    if (typeof data === 'object') return Object.values(data).some(v => (v || '').toString().trim());
+    return false;
+  }
+
+  function isStepAutoComplete(step) {
+    if (step.auto === 'orsd') return hasTemplateData('tmpl:orsd');
+    if (step.auto === 'cq') return hasTemplateData('tmpl:cq');
+    if (step.auto === 'classOrProperty') return hasTemplateData('tmpl:class') || hasTemplateData('tmpl:property');
+    if (step.auto === 'orsdAndCq') return hasTemplateData('tmpl:orsd') && hasTemplateData('tmpl:cq');
+    return null;
+  }
+
+  function getManualStepState() {
+    return loadTemplateData(scopedKey('tmpl:steps'), {}) || {};
+  }
+  function setManualStepState(state) {
+    saveTemplateData(scopedKey('tmpl:steps'), state);
+  }
+
+  function renderProgressPage() {
+    const manual = getManualStepState();
+    let doneCount = 0;
+    const rowsHtml = WORKFLOW_STEPS.map(step => {
+      const auto = isStepAutoComplete(step);
+      const isDone = auto !== null ? auto : !!manual[step.num];
+      if (isDone) doneCount++;
+      const linkTarget = STEP_TEMPLATE_LINKS[step.auto] || step.link;
+      const linkHtml = linkTarget ? `<a class="progress-link" href="#${linkTarget}">${auto !== null ? (isDone ? 'Review →' : 'Start →') : 'Go to section →'}</a>` : '';
+      const badge = auto !== null ? `<span class="progress-badge ${isDone ? 'is-done' : 'is-pending'}">${isDone ? 'Has content' : 'Not started'}</span>` : '';
+      return `<div class="progress-row ${isDone ? 'is-done' : ''}">
+        <label class="progress-checkbox">
+          <input type="checkbox" data-step="${step.num}" ${isDone ? 'checked' : ''} ${auto !== null ? 'disabled' : ''}>
+          <span class="progress-check-mark"></span>
+        </label>
+        <div class="progress-row-body">
+          <span class="progress-num">Step ${step.num}</span>
+          <span class="progress-title">${escapeHtml(step.title)}</span>
+        </div>
+        ${badge}
+        ${linkHtml}
+      </div>`;
+    }).join('');
+    const pct = Math.round((doneCount / WORKFLOW_STEPS.length) * 100);
+    return `<article class="page progress-page">
+      <p class="breadcrumb">Interactive</p>
+      <h1 class="page-title">Workflow Progress</h1>
+      <p class="graph-intro">Tracks the 11-step ontology development workflow from Section 3.2 against project "<strong>${escapeHtml(getActiveProjectName())}</strong>". Steps tied to a template (Competency Questions, ORSD, Class/Property Definition) tick themselves off automatically once you've entered something there; the rest you can check off by hand.</p>
+      ${renderProjectBar()}
+      <div class="progress-summary">
+        <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+        <span class="progress-summary-text">${doneCount} of ${WORKFLOW_STEPS.length} steps done</span>
+      </div>
+      <div class="progress-list">${rowsHtml}</div>
+    </article>`;
+  }
+
+  function attachProgressHandlers() {
+    const page = document.querySelector('.progress-page');
+    if (!page) return;
+    attachProjectBarHandlers(() => renderSectionDOM('progress'));
+    page.querySelectorAll('.progress-checkbox input[type="checkbox"]:not([disabled])').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const state = getManualStepState();
+        state[cb.dataset.step] = cb.checked;
+        setManualStepState(state);
+        renderSectionDOM('progress');
+      });
+    });
+  }
+
   function attachTemplateHandlers() {
     const wrap = document.querySelector('.tmpl-wrap');
     if (!wrap) return;
     const storageKey = wrap.dataset.storageKey;
     const kind = wrap.dataset.kind;
+
+    attachProjectBarHandlers(() => {
+      if (currentSectionId) renderSectionDOM(currentSectionId);
+    });
 
     if (kind === 'table') {
       const columns = JSON.parse(wrap.dataset.columns);
@@ -1014,6 +1347,20 @@
       b.addEventListener('click', () => {
         localStorage.setItem(key, b.dataset.val);
         applyVoted(b.dataset.val);
+        if (FEEDBACK_ENDPOINT_URL) {
+          const s = SECTIONS.find(x => x.id === sectionId);
+          fetch(FEEDBACK_ENDPOINT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+              section_id: sectionId,
+              section_title: s ? stripTags(s.title) : sectionId,
+              vote: b.dataset.val,
+              page_url: location.origin + location.pathname + '#' + sectionId,
+              timestamp: new Date().toISOString(),
+            }),
+          }).catch(() => { /* fail silently — the local vote is already saved */ });
+        }
       });
     });
   }
@@ -1122,7 +1469,11 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><circle cx="12" cy="12" r="2.5"/><line x1="8" y1="7" x2="10" y2="10.5"/><line x1="16" y1="7" x2="14" y2="10.5"/><line x1="8" y1="17" x2="10" y2="13.5"/><line x1="16" y1="17" x2="14" y2="13.5"/></svg>
       Ontology Graph
     </a>`;
-    els.toc.innerHTML = home + graphLink + sections.map(s => {
+    const progressLink = `<a class="toc-link toc-graph" data-target="progress" data-text="workflow progress tracker checklist steps" href="#progress">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Workflow Progress
+    </a>`;
+    els.toc.innerHTML = home + graphLink + progressLink + sections.map(s => {
       const plainTitle = stripTags(s.title);
       return `<a class="toc-link level-${s.level}" data-target="${s.id}" data-text="${escapeHtml(((s.number || '') + ' ' + plainTitle).toLowerCase())}" href="#${s.id}">${s.number ? `<span class="num">${escapeHtml(s.number)}</span>` : ''}${plainTitle}</a>`;
     }).join('');
@@ -1187,6 +1538,12 @@
       els.pageOutline.innerHTML = '';
       els.main.classList.remove('has-outline');
       initOntologyGraph();
+    } else if (id === 'progress') {
+      els.content.innerHTML = renderProgressPage();
+      document.title = 'Workflow Progress · Semantic Models in the IoP';
+      els.pageOutline.innerHTML = '';
+      els.main.classList.remove('has-outline');
+      attachProgressHandlers();
     } else {
       const s = SECTIONS.find(x => x.id === id);
       if (!s) { renderSectionDOM(null); return; }
@@ -1222,6 +1579,7 @@
   function navigateToHash(hash) {
     if (!hash) { showSection(null); return; }
     if (hash === 'graph') { showSection('graph'); return; }
+    if (hash === 'progress') { showSection('progress'); return; }
     const target = SECTIONS.find(s => s.id === hash);
     if (target) { showSection(hash); return; }
     const owner = ANCHOR_MAP[hash];
@@ -1687,14 +2045,17 @@
 
   const GRAPH_PSEUDO_SECTION = { id: 'graph', number: null, title: 'Ontology Graph Explorer', level: 1 };
   const GRAPH_HAYSTACK = 'ontology graph explorer interactive class diagram relations subclassof visualize';
+  const PROGRESS_PSEUDO_SECTION = { id: 'progress', number: null, title: 'Workflow Progress', level: 1 };
+  const PROGRESS_HAYSTACK = 'workflow progress tracker checklist steps completion';
 
   function cmdkMatches(query) {
     const q = query.trim().toLowerCase();
     if (!q) {
-      return [GRAPH_PSEUDO_SECTION, ...SECTIONS.slice(0, 7)];
+      return [GRAPH_PSEUDO_SECTION, PROGRESS_PSEUDO_SECTION, ...SECTIONS.slice(0, 6)];
     }
     const results = searchIndex.filter(s => s.haystack.includes(q)).map(s => SECTIONS.find(x => x.id === s.id)).filter(Boolean);
     if (GRAPH_HAYSTACK.includes(q)) results.unshift(GRAPH_PSEUDO_SECTION);
+    if (PROGRESS_HAYSTACK.includes(q)) results.unshift(PROGRESS_PSEUDO_SECTION);
     return results.slice(0, 20);
   }
 
