@@ -31,6 +31,23 @@
   ]
  },
  {
+  "id": "front-cite",
+  "number": null,
+  "title": "How to Cite",
+  "level": 1,
+  "blocks": [
+   {
+    "type": "p",
+    "html": "If you use this guideline in your own work, please cite it as:"
+   },
+   {
+    "type": "citation",
+    "bibtex": "@misc{molinascomet2022semanticmodels,\n  author       = {Molinas Comet, Lina Teresa},\n  title        = {Guidelines for the Creation of Semantic Models in the {IoP}},\n  year         = {2022},\n  institution  = {RWTH Aachen University},\n  note         = {Internet of Production},\n  url          = {https://github.com/lcomet/UnifiedGuidelinesOntologyDevelopmentForIoP}\n}",
+    "plain": "Molinas Comet, L. T. (2022). Guidelines for the Creation of Semantic Models in the IoP. RWTH Aachen University, Internet of Production. https://github.com/lcomet/UnifiedGuidelinesOntologyDevelopmentForIoP"
+   }
+  ]
+ },
+ {
   "id": "front-abbrev",
   "number": null,
   "title": "List of Abbreviations",
