@@ -264,18 +264,18 @@ for s in sections:
 # "How to Cite" — manually authored, not derived from the LaTeX source.
 # Inserted right after the Contact page.
 # ---------------------------------------------------------------------------
-BIBTEX = """@misc{molinascomet2022semanticmodels,
+BIBTEX = """@misc{molinascomet2026semanticmodels,
   author       = {Molinas Comet, Lina Teresa},
   title        = {Guidelines for the Creation of Semantic Models in the {IoP}},
-  year         = {2022},
+  year         = {2026},
   institution  = {RWTH Aachen University},
-  note         = {Internet of Production},
-  url          = {https://github.com/lcomet/UnifiedGuidelinesOntologyDevelopmentForIoP}
+  note         = {Originally developed 2022; published as an interactive website in 2026. Internet of Production.},
+  url          = {https://lcomet.github.io/semantic-models-iop-website/}
 }"""
 
-PLAIN_CITATION = ("Molinas Comet, L. T. (2022). Guidelines for the Creation of Semantic Models "
-                   "in the IoP. RWTH Aachen University, Internet of Production. "
-                   "https://github.com/lcomet/UnifiedGuidelinesOntologyDevelopmentForIoP")
+PLAIN_CITATION = ("Molinas Comet, L. T. (2026). Guidelines for the Creation of Semantic Models "
+                   "in the IoP (originally developed 2022). RWTH Aachen University, Internet of Production. "
+                   "https://lcomet.github.io/semantic-models-iop-website/")
 
 cite_section = {
     'id': 'front-cite',
