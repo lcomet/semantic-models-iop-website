@@ -95,6 +95,85 @@ for hi, idx in enumerate(heading_idxs):
         sections.append(trailing_section)
 
 # ---------------------------------------------------------------------------
+# Interactive fillable templates for Section 6 — replacing the Google Docs
+# links with real in-page tools (autosave to the visitor's browser, export
+# to CSV/Markdown). Appended after the existing explanatory prose in each
+# 6.x subsection, and the section 6 intro is tweaked to describe them.
+# ---------------------------------------------------------------------------
+TEMPLATE_TOOLS = {
+    'sec-6-1': {
+        'type': 'template-form',
+        'storageKey': 'tmpl:orsd',
+        'filenameBase': 'ontology-requirements-specification',
+        'fields': [
+            {'key': 'purpose', 'label': 'Purpose', 'placeholder': 'Why is this ontology being built? What need does it address?'},
+            {'key': 'scope', 'label': 'Scope', 'placeholder': 'What is covered, and what is explicitly out of scope?'},
+            {'key': 'language', 'label': 'Implementation Language', 'placeholder': 'e.g. OWL 2 DL'},
+            {'key': 'users', 'label': 'Intended End-Users', 'placeholder': 'Who will use this ontology, or systems built on it?'},
+            {'key': 'uses', 'label': 'Intended Uses', 'placeholder': 'What will the ontology be used for in practice?'},
+        ],
+    },
+    'sec-6-2': {
+        'type': 'template-table',
+        'storageKey': 'tmpl:cq',
+        'filenameBase': 'competency-questions',
+        'columns': [
+            {'key': 'question', 'label': 'Competency Question', 'placeholder': 'e.g. Which machine produced this product?'},
+            {'key': 'terms', 'label': 'Key Terms', 'placeholder': 'e.g. Machine, Product, isProducedBy'},
+        ],
+    },
+    'sec-6-3': {
+        'type': 'template-table',
+        'storageKey': 'tmpl:class',
+        'filenameBase': 'class-definitions',
+        'columns': [
+            {'key': 'name', 'label': 'Class Name', 'placeholder': 'e.g. Machine'},
+            {'key': 'description', 'label': 'Description', 'placeholder': 'e.g. A physical device that performs a manufacturing operation'},
+            {'key': 'superclass', 'label': 'Superclass', 'placeholder': 'e.g. PhysicalObject'},
+            {'key': 'notes', 'label': 'Notes', 'placeholder': 'Synonyms, source, open questions…'},
+        ],
+    },
+    'sec-6-4': {
+        'type': 'template-table',
+        'storageKey': 'tmpl:property',
+        'filenameBase': 'property-definitions',
+        'columns': [
+            {'key': 'name', 'label': 'Property Name', 'placeholder': 'e.g. hasMachineComponent'},
+            {'key': 'description', 'label': 'Description', 'placeholder': 'e.g. Relates a machine to one of its components'},
+            {'key': 'domain', 'label': 'Domain', 'placeholder': 'e.g. Machine'},
+            {'key': 'range', 'label': 'Range', 'placeholder': 'e.g. MachineComponent'},
+            {'key': 'type', 'label': 'Type', 'placeholder': 'Object or Data'},
+        ],
+    },
+    'sec-6-5': {
+        'type': 'template-table',
+        'storageKey': 'tmpl:individuals',
+        'filenameBase': 'individuals-definitions',
+        'columns': [
+            {'key': 'name', 'label': 'Individual Name', 'placeholder': 'e.g. Resistor_01'},
+            {'key': 'class', 'label': 'Class (instance of)', 'placeholder': 'e.g. Resistor'},
+            {'key': 'description', 'label': 'Description', 'placeholder': 'Notes, property values, source…'},
+        ],
+    },
+}
+
+for s in sections:
+    tool = TEMPLATE_TOOLS.get(s['id'])
+    if tool:
+        s['blocks'].append(tool)
+
+for s in sections:
+    if s['id'] == 'sec-6':
+        for b in s['blocks']:
+            if b['type'] == 'p' and 'To download the templates' in b['html']:
+                b['html'] = ('Each template below is a small interactive tool built into this page — fill it '
+                             'in directly, and it autosaves in your browser as you type. When you\'re done, export '
+                             'it as CSV or Markdown to bring into your own ontology project. Nothing is uploaded '
+                             'anywhere; it stays on your device unless you export it. If you\'d rather work in the '
+                             'original Google Docs/Sheets, they\'re still available in this '
+                             '<a href="https://drive.google.com/drive/folders/1xwtJYaNQIGd1TWdWayciCiH5wcpnSDxw?usp=sharing" target="_blank" rel="noopener">Google Drive folder</a>.')
+
+# ---------------------------------------------------------------------------
 # "How to Cite" — manually authored, not derived from the LaTeX source.
 # Inserted right after the Contact page.
 # ---------------------------------------------------------------------------

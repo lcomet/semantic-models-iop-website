@@ -41,6 +41,10 @@
       .replace(/>/g, '&gt;');
   }
 
+  function escapeAttr(str) {
+    return escapeHtml(str).replace(/"/g, '&quot;');
+  }
+
   // Lightly format inline text: wrap ontology-style CamelCase / dotted terms and
   // quoted phrases so long-form prose reads a bit richer, without being noisy.
   function formatInline(text) {
@@ -135,6 +139,10 @@
         </div>`;
       case 'reflist':
         return `<ol class="reflist">${b.items.map(it => `<li id="ref-${it.key}"><span class="ref-num">[${it.num}]</span><span>${it.text}${it.url ? ` <a href="${it.url}" target="_blank" rel="noopener" class="ref-link">↗</a>` : ''}</span></li>`).join('')}</ol>`;
+      case 'template-table':
+        return renderTemplateTable(b);
+      case 'template-form':
+        return renderTemplateForm(b);
       case 'ontology-matrix':
         return renderOntologyMatrix(b);
       case 'raw':
@@ -744,6 +752,186 @@
     </article>`;
   }
 
+  // -------- fillable templates (Section 6): tables & forms, autosaved locally --------
+  function loadTemplateData(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      return parsed;
+    } catch (e) {
+      return fallback;
+    }
+  }
+  function saveTemplateData(key, data) {
+    try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { /* storage full or blocked */ }
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function csvEscape(v) {
+    return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  }
+
+  function renderTemplateTable(b) {
+    const rows = loadTemplateData(b.storageKey, null) || [{}, {}, {}];
+    const colsJson = escapeAttr(JSON.stringify(b.columns));
+    const headerHtml = b.columns.map(c => `<th>${escapeHtml(c.label)}</th>`).join('') + '<th class="tmpl-th-remove"></th>';
+    const rowsHtml = rows.map((row, i) => `<tr data-row="${i}">
+        ${b.columns.map(c => `<td><input type="text" data-col="${c.key}" value="${escapeAttr(row[c.key] || '')}" placeholder="${escapeAttr(c.placeholder || '')}"></td>`).join('')}
+        <td class="tmpl-row-remove"><button data-action="remove-row" aria-label="Remove row">×</button></td>
+      </tr>`).join('');
+    return `<div class="tmpl-wrap" data-storage-key="${escapeAttr(b.storageKey)}" data-columns="${colsJson}" data-filename="${escapeAttr(b.filenameBase)}" data-kind="table">
+      <div class="tmpl-toolbar">
+        <span class="tmpl-hint">Saved only in your browser — nothing is uploaded.</span>
+        <div class="tmpl-actions">
+          <button class="tmpl-btn" data-action="export-csv">Export CSV</button>
+          <button class="tmpl-btn" data-action="export-md">Export Markdown</button>
+          <button class="tmpl-btn tmpl-btn-ghost" data-action="clear-table">Clear all</button>
+        </div>
+      </div>
+      <div class="tmpl-table-scroll">
+        <table class="tmpl-table">
+          <thead><tr>${headerHtml}</tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+      <button class="tmpl-add-row" data-action="add-row">+ Add row</button>
+    </div>`;
+  }
+
+  function renderTemplateForm(b) {
+    const data = loadTemplateData(b.storageKey, {}) || {};
+    const fieldsJson = escapeAttr(JSON.stringify(b.fields));
+    const fieldsHtml = b.fields.map(f => `
+      <div class="tmpl-field">
+        <label class="tmpl-field-label">${escapeHtml(f.label)}</label>
+        <textarea data-field="${escapeAttr(f.key)}" placeholder="${escapeAttr(f.placeholder || '')}" rows="2">${escapeHtml(data[f.key] || '')}</textarea>
+      </div>`).join('');
+    return `<div class="tmpl-wrap tmpl-form" data-storage-key="${escapeAttr(b.storageKey)}" data-fields="${fieldsJson}" data-filename="${escapeAttr(b.filenameBase)}" data-kind="form">
+      <div class="tmpl-toolbar">
+        <span class="tmpl-hint">Saved only in your browser — nothing is uploaded.</span>
+        <div class="tmpl-actions">
+          <button class="tmpl-btn" data-action="export-md">Export Markdown</button>
+          <button class="tmpl-btn tmpl-btn-ghost" data-action="clear-form">Clear all</button>
+        </div>
+      </div>
+      ${fieldsHtml}
+    </div>`;
+  }
+
+  function readTableData(wrap) {
+    const rows = [];
+    wrap.querySelectorAll('tbody tr').forEach(tr => {
+      const row = {};
+      tr.querySelectorAll('input[data-col]').forEach(inp => { row[inp.dataset.col] = inp.value; });
+      rows.push(row);
+    });
+    return rows;
+  }
+
+  function attachTemplateHandlers() {
+    const wrap = document.querySelector('.tmpl-wrap');
+    if (!wrap) return;
+    const storageKey = wrap.dataset.storageKey;
+    const kind = wrap.dataset.kind;
+
+    if (kind === 'table') {
+      const columns = JSON.parse(wrap.dataset.columns);
+
+      function persist() {
+        saveTemplateData(storageKey, readTableData(wrap));
+      }
+
+      wrap.addEventListener('input', (e) => {
+        if (e.target.matches('input[data-col]')) persist();
+      });
+
+      wrap.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        if (action === 'add-row') {
+          const tbody = wrap.querySelector('tbody');
+          const idx = tbody.children.length;
+          const tr = document.createElement('tr');
+          tr.dataset.row = idx;
+          tr.innerHTML = columns.map(c => `<td><input type="text" data-col="${escapeAttr(c.key)}" value="" placeholder="${escapeAttr(c.placeholder || '')}"></td>`).join('') +
+            `<td class="tmpl-row-remove"><button data-action="remove-row" aria-label="Remove row">×</button></td>`;
+          tbody.appendChild(tr);
+          tr.querySelector('input').focus();
+        } else if (action === 'remove-row') {
+          const tr = btn.closest('tr');
+          const tbody = wrap.querySelector('tbody');
+          if (tbody.children.length > 1) {
+            tr.remove();
+          } else {
+            tr.querySelectorAll('input').forEach(inp => inp.value = '');
+          }
+          persist();
+        } else if (action === 'export-csv') {
+          const rows = readTableData(wrap);
+          const lines = [columns.map(c => csvEscape(c.label)).join(',')];
+          rows.forEach(r => lines.push(columns.map(c => csvEscape(r[c.key])).join(',')));
+          downloadBlob(new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), wrap.dataset.filename + '.csv');
+        } else if (action === 'export-md') {
+          const rows = readTableData(wrap);
+          const head = '| ' + columns.map(c => c.label).join(' | ') + ' |';
+          const sep = '| ' + columns.map(() => '---').join(' | ') + ' |';
+          const body = rows.filter(r => columns.some(c => (r[c.key] || '').trim())).map(r => '| ' + columns.map(c => (r[c.key] || '').replace(/\|/g, '\\|')).join(' | ') + ' |').join('\n');
+          downloadBlob(new Blob([`${head}\n${sep}\n${body}\n`], { type: 'text/markdown;charset=utf-8' }), wrap.dataset.filename + '.md');
+        } else if (action === 'clear-table') {
+          if (confirm('Clear all rows in this table? This can\'t be undone.')) {
+            saveTemplateData(storageKey, [{}, {}, {}]);
+            const tbody = wrap.querySelector('tbody');
+            tbody.innerHTML = [0, 1, 2].map(i => `<tr data-row="${i}">` +
+              columns.map(c => `<td><input type="text" data-col="${escapeAttr(c.key)}" value="" placeholder="${escapeAttr(c.placeholder || '')}"></td>`).join('') +
+              `<td class="tmpl-row-remove"><button data-action="remove-row" aria-label="Remove row">×</button></td></tr>`).join('');
+          }
+        }
+      });
+    } else if (kind === 'form') {
+      const fields = JSON.parse(wrap.dataset.fields);
+
+      function persist() {
+        const data = {};
+        wrap.querySelectorAll('textarea[data-field]').forEach(ta => { data[ta.dataset.field] = ta.value; });
+        saveTemplateData(storageKey, data);
+      }
+
+      wrap.addEventListener('input', (e) => {
+        if (e.target.matches('textarea[data-field]')) persist();
+      });
+
+      wrap.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        if (btn.dataset.action === 'export-md') {
+          const lines = fields.map(f => {
+            const val = wrap.querySelector(`textarea[data-field="${f.key}"]`).value.trim();
+            return `## ${f.label}\n\n${val || '_(not filled in)_'}\n`;
+          });
+          downloadBlob(new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' }), wrap.dataset.filename + '.md');
+        } else if (btn.dataset.action === 'clear-form') {
+          if (confirm('Clear all fields in this form? This can\'t be undone.')) {
+            saveTemplateData(storageKey, {});
+            wrap.querySelectorAll('textarea[data-field]').forEach(ta => ta.value = '');
+          }
+        }
+      });
+    }
+  }
+
+
   function buildFeedbackWidget(s) {
     return `<div class="feedback" data-section="${s.id}">
       <p class="feedback-q">Was this page helpful?</p>
@@ -964,6 +1152,7 @@
     attachLightboxHandlers();
     attachMatrixHandlers();
     attachFeedbackHandlers();
+    attachTemplateHandlers();
     updateSectionProgress();
 
     if (scrollToAnchor) {
